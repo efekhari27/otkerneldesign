@@ -1,0 +1,37 @@
+# Default cache directories
+/*_cache/
+/cache/
+/*__pycache__/
+
+# ~ files
+*~
+*\#
+
+#Files created by Windows
+*.db
+
+#Files created by LaTex
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*blx.bib
+*.nav
+*.run.xml
+*.snm
+*.toc
+*.vrb
+
+#Renderings other than PDF
+*.ps
+*.dvi
+
+#Jupyter notebook data
+*.ipynb_checkpoints
+
+
+
