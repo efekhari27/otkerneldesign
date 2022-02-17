@@ -8,34 +8,51 @@ Usage
 ::
     python setup.py install
 """
-from setuptools import setup, find_packages
 
+
+import re
+import os
+from distutils.core import setup
+
+from setuptools import find_packages
+
+# Get the version from __init__.py
+path = os.path.join(os.path.dirname(__file__), 'otkerneldesign', '__init__.py')
+with open(path) as f:
+    version_file = f.read()
+
+version = re.search(r"^\s*__version__\s*=\s*['\"]([^'\"]+)['\"]",
+                    version_file, re.M)
+if version:
+    version = version.group(1)
+else:
+    raise RuntimeError("Unable to find version string.")
+
+# Long description
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
     name='otkerneldesign',
-    version='0.1',
-    license='LGPL',
-    author="Joesph Muré, Elias Fekhari",
-    author_email='joesph.mure@edf.fr',
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
+    version=version,
+    license='LGPLv3+',
+    author="Elias Fekhari, Joseph Muré",
+    author_email='elias.fekhari@edf.fr',
+    packages=find_packages(),
     url='https://github.com/efekhari27/otkerneldesign',
-    keywords=['OpenTurns', 'KernelHerding'],
+    keywords=['OpenTURNS', 'KernelHerding'],
     description="Design of experiments based on kernel methods",
     install_requires=[
           "numpy",
           "scipy", 
           "openturns>=1.17"
       ],
+    include_package_data=True,
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
-        "License :: OSI Approved :: GNU General Public License (GPL)",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
-        "Natural Language :: French",
+        "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development",
         "Topic :: Scientific/Engineering",

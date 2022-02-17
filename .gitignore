@@ -33,5 +33,7 @@
 #Jupyter notebook data
 *.ipynb_checkpoints
 
-
-
+#Compilation products
+build*/
+otkerneldesign.egg-info*/
+dist*/

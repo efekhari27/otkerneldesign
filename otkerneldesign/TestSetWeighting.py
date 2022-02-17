@@ -131,36 +131,3 @@ class TestSetWeighting:
 
         return np.linalg.pinv(test_covmatrix) @ test_potentials
 
-
-if __name__ == "__main__":
-
-    from KernelHerding_new import KernelHerding
-
-    dimension = 2
-    ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
-    kernel = ot.ProductCovarianceModel(ker_list)
-
-    kh = KernelHerding(
-        kernel=kernel,
-        candidate_set_size=2 ** 12,
-        distribution=ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * dimension),
-    )
-    Xunif, Iunif = kh.select_design(50)
-    distribution_sample = kh.get_candidate_set()
-
-    tsw = TestSetWeighting(Xunif[0:30], Xunif[30:50], distribution_sample)
-    weights = tsw.compute_weights()
-
-    test_design = ot.ComposedDistribution([ot.Normal(0.5, 0.5)] * 2).getSample(20)
-    tsw2 = TestSetWeighting(Xunif[0:30], test_design, distribution_sample)
-    weights2 = tsw2.compute_weights()
-
-    import matplotlib.pyplot as plt
-
-    plt.scatter(Xunif[0:30, 0], Xunif[0:30, 1])
-    plt.scatter(
-        test_design.getMarginal(0),
-        test_design.getMarginal(1),
-        s=weights2 * 1000,
-        alpha=0.7,
-    )
