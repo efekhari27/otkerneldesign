@@ -7,11 +7,10 @@ Copyright (C) EDF 2022
 """
 import numpy as np
 import openturns as ot
-from scipy.special import erfc
 from copy import deepcopy
 
 
-class KernelHerding:
+class KernelHerdingTensorized:
     """
     Incrementally select new design points.
 
@@ -23,7 +22,7 @@ class KernelHerding:
     distribution : :class:`openturns.Distribution`
         Distribution of the set of candidate points.
         If not specified, then *candidate_set* must be specified instead.
-        Even if *candidate_set* is specified, can be useful if it allows the use of analytical formulas.
+        Even if *candidate_set* is specified, can be useful if it allows the use of tensorized formulas.
     candidate_set_size : positive int
         Size of the set of all candidate points.
         Unnecessary if *candidate_set* is specified. Otherwise, :math:`2^{12}` by default.
@@ -57,6 +56,7 @@ class KernelHerding:
                 raise ValueError("Either provide a distribution or a candidate set.")
         else:
             self._dimension = distribution.getDimension()
+            self._distribution = distribution
 
         # Kernel
         if kernel is None:
@@ -96,19 +96,19 @@ class KernelHerding:
             )
             self._candidate_set.add(initial_design)
 
-        # Analytical potential?
+        # tensorized potential?
         if distribution is not None:
             self.examine_distribution(distribution)
         else:
-            self._analytical = None
+            self._tensorized = False
 
         # Covariance matrix
-        if self._analytical is None:
-            self._covmatrix_indices = list(range(self._candidate_set.getSize()))
-            self._covmatrix = np.array(self._kernel.discretize(self._candidate_set))
-        else:
+        if self._tensorized:
             self._covmatrix_indices = [-1] * self._candidate_set.getSize()
             self._covmatrix = np.zeros((0, self._candidate_set.getSize()))
+        else:
+            self._covmatrix_indices = list(range(self._candidate_set.getSize()))
+            self._covmatrix = np.array(self._kernel.discretize(self._candidate_set))
         self._target_potential = self.compute_target_potential()
 
     def _set_kernel(self, kernel):
@@ -122,55 +122,16 @@ class KernelHerding:
             )
 
     def examine_distribution(self, distribution):
-        self._analytical = None
-        if distribution.getClassName() == "Normal":
-            if distribution == ot.Normal(distribution.getDimension()):
-                self._analytical = ["normal"] * distribution.getDimension()
-        elif distribution.getClassName() == "Uniform":
-            if distribution == ot.Uniform(0.0, 1.0):
-                self._analytical = ["uniform"]
-        elif distribution.getClassName() == "ComposedDistribution":
-            dist_list = distribution.getDistributionCollection()
-            dist_strings = ["unknown"] * len(dist_list)
-            is_legit = [False] * len(dist_list)
-            for num, dist in enumerate(dist_list):
-                if dist == ot.Uniform(0.0, 1.0):
-                    is_legit[num] = True
-                    dist_strings[num] = "uniform"
-                elif dist == ot.Normal(1):
-                    is_legit[num] = True
-                    dist_strings[num] = "normal"
-            if np.prod(is_legit):
-                self._analytical = dist_strings
-
-    @staticmethod
-    def _compute_uniform_aux(points, theta):
-        points = np.array(points)
-        expon = np.exp(-np.sqrt(5) / theta * points)
-        quad = 5 * np.sqrt(5) * points ** 2
-        lin = 25 * theta * points
-        cons = 8 * np.sqrt(5) * theta ** 2
-        return expon * (quad + lin + cons)
-
-    @staticmethod
-    def _compute_normal_aux(points, theta):
-        points = np.array(points)
-        root = np.sqrt(5) / theta
-        term = (
-            root / 3 / np.sqrt(2 * np.pi) * (3 - root ** 2) * np.exp(-(points ** 2) / 2)
-        )
-        factor_erfc = erfc((root - points) / np.sqrt(2))
-        expon = np.exp(root ** 2 / 2 - root * points) / 6
-        quad = root ** 2 * points ** 2
-        lin = (3 - 2 * root ** 2) * root * points
-        cons = root ** 2 * (root ** 2 - 2) + 3
-        return term + expon * factor_erfc * (quad + lin + cons)
+        self._tensorized = False
+        if distribution.getClassName() == "ComposedDistribution":
+            if distribution.hasIndependentCopula():
+                self._tensorized = True
 
     def compute_target_potential(self):
-        if self._analytical is None:
+        if self._tensorized is None:
             return self._covmatrix.mean(axis=0)
 
-        # At this point, we know the potential is computed analytically.
+        # At this point, we know the potential is a product of univariate potentials.
         if self._kernel.getClassName() == "ProductCovarianceModel":
             if self._kernel.getNuggetFactor() > 1e-12:
                 raise ValueError("No nugget factor allowed.")
@@ -183,36 +144,37 @@ class KernelHerding:
         for kernel in kernel_list:
             if kernel.getInputDimension() != 1:
                 raise ValueError("1 kernel per input dimension")
-            if kernel.getImplementation().getClassName() != "MaternModel":
-                raise ValueError("Only Matern kernels allowed.")
-            if kernel.getFullParameter()[-1] != 2.5:  # getNu() cannot be accessed
-                raise ValueError("Nu must be 2.5, not {}".format(kernel.getNu()))
             if kernel.getNuggetFactor() > 1e-12:
                 raise ValueError("No nugget factor allowed.")
 
-        potential = np.ones(self._candidate_set.getSize())
+        marginal_list = self._distribution.getDistributionCollection()
+        marginal_potential_functions = []
+        for marginal, kernel in zip(marginal_list, kernel_list):
+            # regular grid
+            uniform_nodes = ot.RegularGrid(0.01, 0.99, 99)
+            # Apply quantile function
+            nodes = marginal.computeQuantile(uniform_nodes.getValues())
+            # Compute covariance matrix
+            marginal_covmatrix = np.array(kernel.discretize(nodes))
+            # Compute potentials
+            marginal_potentials = marginal_covmatrix.mean(axis=0)
+            # Create a piecewise linear function
+            marginal_potential_function = ot.Function(ot.PiecewiseLinearEvaluation(nodes.asPoint(), marginal_potentials))
+            marginal_potential_functions.append(marginal_potential_function)
 
-        for ind, kernel in enumerate(kernel_list):
-            theta = kernel.getScale()[0]
-            points = np.reshape(self._candidate_set[:, ind], -1)
-            distribution = self._analytical[ind]
+        # Aggregate the functions
+        aggregated_potential_functions = ot.AggregatedFunction(marginal_potential_functions)
 
-            if distribution == "uniform":
-                term = 16 * theta / 3 / np.sqrt(5)
-                factor = -1 / 15 / theta
-                aux1 = self._compute_uniform_aux(points, theta)
-                aux2 = self._compute_uniform_aux(-points + 1.0, theta)
-                potential *= term + factor * (aux1 + aux2)
+        # Product
+        inputs = ["x{}".format(i) for i in range(len(marginal_list))]
+        formula = [" * ".join(inputs)]
+        product = ot.SymbolicFunction(inputs, formula)
 
-            elif distribution == "normal":
-                aux1 = self._compute_normal_aux(points, theta)
-                aux2 = self._compute_normal_aux(-points, theta)
-                potential *= aux1 + aux2
+        # Potential function
+        potential_function = ot.ComposedFunction(aggregated_potential_functions, product)
 
-            else:
-                raise ValueError("Distribution should be either 'uniform' or 'normal'")
+        return potential_function(self._candidate_set)
 
-        return potential
 
     def compute_current_potential(self, design_indices):
         """
@@ -331,3 +293,15 @@ class KernelHerding:
         """
         return deepcopy(self._candidate_set)
 
+size = 20
+dimension = 2
+distribution = ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * dimension)
+ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
+kernel = ot.ProductCovarianceModel(ker_list)
+
+kh = KernelHerdingTensorized(
+    kernel=kernel,
+    candidate_set_size=2 ** 12,
+    distribution=distribution
+)
+uniform_design_points, uniform_design_indexes = kh.select_design(size)
