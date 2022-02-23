@@ -149,10 +149,9 @@ class KernelHerdingTensorized:
 
         marginal_list = self._distribution.getDistributionCollection()
         marginal_potential_functions = []
-        inputs = ["x{}".format(i) for i in range(len(marginal_list))]
-        for ind, (marginal, kernel) in enumerate(zip(marginal_list, kernel_list)):
+        for marginal, kernel in zip(marginal_list, kernel_list):
             # regular grid
-            uniform_nodes = ot.RegularGrid(0.01, 0.01, 99)
+            uniform_nodes = ot.RegularGrid(0.01, 0.99, 99)
             # Apply quantile function
             nodes = marginal.computeQuantile(uniform_nodes.getValues())
             # Compute covariance matrix
@@ -160,22 +159,22 @@ class KernelHerdingTensorized:
             # Compute potentials
             marginal_potentials = marginal_covmatrix.mean(axis=0)
             # Create a piecewise linear function
-            oned_potential = ot.Function(ot.PiecewiseLinearEvaluation(nodes.asPoint(), marginal_potentials))
-            evaluation = ot.SymbolicFunction(inputs, ["x{}".format(ind)])
-            marginal_potential_function = ot.ComposedFunction(oned_potential, evaluation)
+            marginal_potential_function = ot.Function(ot.PiecewiseLinearEvaluation(nodes.asPoint(), marginal_potentials))
             marginal_potential_functions.append(marginal_potential_function)
 
         # Aggregate the functions
         aggregated_potential_functions = ot.AggregatedFunction(marginal_potential_functions)
 
         # Product
+        inputs = ["x{}".format(i) for i in range(len(marginal_list))]
         formula = [" * ".join(inputs)]
         product = ot.SymbolicFunction(inputs, formula)
 
         # Potential function
-        potential_function = ot.ComposedFunction(product, aggregated_potential_functions)
+        potential_function = ot.ComposedFunction(aggregated_potential_functions, product)
 
-        return potential_function(self._candidate_set).asPoint()
+        return potential_function(self._candidate_set)
+
 
     def compute_current_potential(self, design_indices):
         """
