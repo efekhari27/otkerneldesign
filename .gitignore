@@ -2,6 +2,8 @@
 /*_cache/
 /cache/
 /*__pycache__/
+examples/*__pycache__/
+otkerneldesign/*__pycache__/
 
 # ~ files
 *~
