@@ -5,31 +5,39 @@ Copyright (C) EDF 2022
 
 @author: Elias Fekhari
 """
-#%%
 import numpy as np
 import openturns as ot
 from scipy.spatial import distance_matrix
 
 class GreedySupportPoints:
     """
-    Generate a SupportPoints sample
+    Incrementally select new design points with greedy support points.
 
     Parameters
     ----------
-    size: int
-        Sample size
-    distribution: ot.ComposedDistribution()
-        Input random distribution including its dimension. If None then Uniform(0, 1).
-    initial_design: np.array()
-        Numpy array with the shape size x dimension
-    candiate_points: np.array()
-        Numpy array with the shape candidate_point_size x dimension
-    my_seed: int 
-        Pseudo-random seed used to generate the design
+    distribution : :class:`openturns.Distribution`
+        Distribution of the set of candidate set.
+        If not specified, then *candidate_set* must be specified instead.
+        Even if *candidate_set* is specified, can be useful if it allows the use of analytical formulas.
+    candidate_set_size : positive int
+        Size of the set of all candidate points.
+        Unnecessary if *candidate_set* is specified. Otherwise, :math:`2^{12}` by default.
+    candidate_set : 2-d list of float
+        Large sample that empirically represents a distribution.
+        If not specified, then *distribution* and *candidate_set_size* must be in order to generate it automatically.
+    initial_design : 2-d list of float
+        Sample of points that must be included in the design. Empty by default.
 
-    Returns
+    Example
     -------
-    return a SupportPoints sample with a given sample size and dimension.
+    import openturns
+    import otkerneldesign
+
+    distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
+    dimension = distribution.geDimension()
+    # Greedy support points design
+    sp = otkd.GreedySupportPoints(distribution=distribution)
+    sp_design = sp.select_design(size)
     """
     def __init__(
         self, 
@@ -88,6 +96,25 @@ class GreedySupportPoints:
         self._target_potential = self.compute_target_potential()
         
     def compute_distance_matrix(self, batch_nb=8):
+        """
+        Compute the euclidian distance matrix between each couples of candidate points. 
+        To avoid saturating the memory, this symmetric matrix is computed by 
+        blocks and using half-precision floating-point format (e.g., `np.float16`).
+
+        Parameters
+        ----------
+        batch_nb : positive int
+                    Number of blocks used to compute the symmetric 
+                    matrix of distances. By default set to 8.
+
+        Returns
+        -------
+        distances : 2-d numpy array
+                    Squared and symmetric matrix of distances between all 
+                    the couples of points in the candidate set.
+        """
+
+
         # Divide the candidate points in batches
         batch_size = self._candidate_set.shape[0] // batch_nb
         batches = []
@@ -119,17 +146,60 @@ class GreedySupportPoints:
         return distances
 
     def compute_target_potential(self):
+        """
+        Compute the potential of the target probability measure :math:`\mu`.
+
+        Returns
+        -------
+        potential : potential of the measure :math:`\mu` computed over the N-sized 
+        candidate set and defined for the characteristic energy-distance kernel of Székely and Rizzo by
+        
+        .. :math:`P_{\mu}(x) := \int k(x, x') d \mu(x')
+                              = \frac{1}{N} \sum_{k=1}^N \|\vect{x}-\vect{x}'^{(k)}\|`.
+        """
         potentials = self.distances.mean(axis=0)
         return potentials
 
     def compute_current_potential(self, design_indices):
+        """
+        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) 
+        defined by the design :math:`X_n`. Considering the discrete measure 
+        :math:`\zeta_n = \frac{1}{n} \sum_{i=1}^{n} \delta(x^{(i)})`, 
+        its potential is defined for the characteristic energy-distance kernel of Székely and Rizzo
+        
+        .. :math:`P_{\zeta_n}(x) = \frac{1}{n} \sum_{i=1}^{n} k(\vect{x}, \vect{x}^{(i)})
+                                 = \frac{1}{n} \sum_{i=1}^{n} \|\vect{x}-\vect{x}^{(i)}\|`.
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        potential : potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
+
+        """
         distances_to_design = self.distances[:, design_indices]
         current_potential = distances_to_design.mean(axis=1)
         current_potential *= len(design_indices) / (len(design_indices) + 1)
         return current_potential
     
-    # Change the declaration of the initial_size to make the code more robust
     def select_design(self, size):
+        """
+        Select a design with greedy support points. 
+
+        Parameters
+        ----------
+        size : positive int
+            Number of points to be selected
+
+        Returns
+        -------
+        design : :class:`openturns.Sample`
+            Sample of all selected points
+        """
         for _ in range(size):
             if len(self._design_indices)==0:
                 criteria = self._target_potential
@@ -140,12 +210,3 @@ class GreedySupportPoints:
             self._design_indices = np.append(self._design_indices, next_index)
         sample = self._candidate_set[self._design_indices[self._initial_size:]]
         return sample
-
-
-# %%
-size = 20
-dimension = 2
-distribution = ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * dimension)
-sp = GreedySupportPoints(distribution=distribution, candidate_set_size=2**12)
-sample = sp.select_design(size)
-

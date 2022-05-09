@@ -10,6 +10,28 @@ import numpy as np
 
 
 class TestSetWeighting:
+    """
+    Optimally-weighting a test-set for estimating a machine learning performance 
+    metric (e.g, Integrated Squared Error, predictivity coefficient).
+
+    Parameters
+    ----------
+    train : :class:`openturns.Sample`
+        Training set used for fitting a machine learning model.
+    test : :class:`openturns.Sample`
+        Training set used for validating a machine learning model.
+    distribution_sample : 2-d list of float
+        Large sample that empirically represents a distribution.
+        If not specified, then *distribution* and *candidate_set_size* 
+        must be in order to generate it automatically.
+    kernel : :class:`openturns.CovarianceModel`
+        Covariance kernel used to define potentials.
+        By default a product of Matern kernels with smoothness 5/2.
+
+    Example
+    -------
+    To do     
+    """
     def __init__(
         self,
         train,
@@ -80,7 +102,21 @@ class TestSetWeighting:
             )
 
     def compute_weights(self, residuals=None):
+        """
+        Compute optimal-weights for better performance estimation of a machine learning model.
 
+        Parameters
+        ----------
+        residuals: list 
+                    List of residuals in the case of a non-interpolating machine learning model. 
+                    By default set to `None` for interpolating model (e.g., Gaussian process regression).
+
+        Return
+        ------
+        weights : list 
+                    List of weights to be associated with the test set.   
+
+        """
         train_size = self._train_rows.shape[0]
         test_size = self._test_rows.shape[0]
 

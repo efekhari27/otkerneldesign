@@ -13,7 +13,7 @@ from copy import deepcopy
 
 class KernelHerding:
     """
-    Incrementally select new design points.
+    Incrementally select new design points with kernel herding.
 
     Parameters
     ----------
@@ -21,17 +21,34 @@ class KernelHerding:
         Covariance kernel used to define potentials.
         By default a product of Matern kernels with smoothness 5/2.
     distribution : :class:`openturns.Distribution`
-        Distribution of the set of candidate points.
+        Distribution of the set of candidate set.
         If not specified, then *candidate_set* must be specified instead.
         Even if *candidate_set* is specified, can be useful if it allows the use of analytical formulas.
     candidate_set_size : positive int
         Size of the set of all candidate points.
         Unnecessary if *candidate_set* is specified. Otherwise, :math:`2^{12}` by default.
     candidate_set : 2-d list of float
-        Large sample that represents a distribution.
+        Large sample that empirically represents a distribution.
         If not specified, then *distribution* and *candidate_set_size* must be in order to generate it automatically.
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
+
+    Example
+    -------
+    import openturns
+    import otkerneldesign
+
+    distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
+    dimension = distribution.geDimension()
+    # Kernel definition
+    ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
+    kernel = ot.ProductCovarianceModel(ker_list)
+    # Kernel herding design
+    kh = otkd.KernelHerding(
+        kernel=kernel,
+        distribution=distribution
+    )
+    kh_design, _ = kh.select_design(size=20)
     """
 
     def __init__(
@@ -98,7 +115,7 @@ class KernelHerding:
 
         # Analytical potential?
         if distribution is not None:
-            self.examine_distribution(distribution)
+            self._examine_distribution(distribution)
         else:
             self._analytical = None
 
@@ -121,7 +138,7 @@ class KernelHerding:
                 )
             )
 
-    def examine_distribution(self, distribution):
+    def _examine_distribution(self, distribution):
         self._analytical = None
         if distribution.getClassName() == "Normal":
             if distribution == ot.Normal(distribution.getDimension()):
@@ -167,6 +184,16 @@ class KernelHerding:
         return term + expon * factor_erfc * (quad + lin + cons)
 
     def compute_target_potential(self):
+        """
+        Compute the potential of the target probability measure :math:`\mu`.
+
+        Returns
+        -------
+        potential : potential of the measure :math:`\mu` defined by 
+        
+        .. :math:`P_{\mu}(x) := \int k(x, x') d \mu(x')`.
+
+        """
         if self._analytical is None:
             return self._covmatrix.mean(axis=0)
 
@@ -216,7 +243,10 @@ class KernelHerding:
 
     def compute_current_potential(self, design_indices):
         """
-        Compute the potential of the design and the weights of the design points.
+        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`X_n`.
+        Considering the discrete measure :math:`\zeta_n = \frac{1}{n} \sum_{i=1}^{n} \delta(x^{(i)})`, its potential is defined as 
+        
+        .. :math:`P_{\zeta_n}(x) = \frac{1}{n} \sum_{i=1}^{n} k(x, x^{(i)})`.
 
         Parameters
         ----------
@@ -226,7 +256,7 @@ class KernelHerding:
 
         Returns
         -------
-        potential : potential of the measure defined by the design
+        potential : potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
 
         """
         if len(design_indices) == 0:
@@ -236,7 +266,9 @@ class KernelHerding:
 
     def compute_criterion(self, design_indices):
         """
-        Compute the criterion on a design.
+        Compute the criterion on a design. At any point of the candidate set, 
+        this criterion is simply given by the difference between the target potential 
+        and the potential of a discrete measure defined by a given design.
 
         Parameters
         ----------
@@ -254,13 +286,13 @@ class KernelHerding:
 
     def select_design(self, size, initial_design_indices=[]):
         """
-        Select a design with kernel herding.
+        Select a design with kernel herding. 
 
         Parameters
         ----------
         size : positive int
             Number of points to be selected
-        design_indices : list of positive int
+        initial_design_indices : list of positive int
             List of the indices of *already* selected points (empty by default)
             in the Sample of candidate points
 
@@ -298,7 +330,7 @@ class KernelHerding:
         ----------
         design_indices : list of positive int
             List of the indices of the lines of the covariance matrix to select.
-            Each index correponds to a Point in the Sample of candidate points.
+            Each index corresponds to a Point in the Sample of candidate points.
 
         Returns
         -------

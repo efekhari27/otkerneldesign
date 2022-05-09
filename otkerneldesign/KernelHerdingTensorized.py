@@ -12,7 +12,11 @@ from copy import deepcopy
 
 class KernelHerdingTensorized:
     """
-    Incrementally select new design points.
+    Incrementally select new design points with tensorized kernel herding. 
+    The main difference with the ``KernelHerding`` class is contained in the 
+    ``compute_target_potential`` method. Exploiting the independence of 
+    the input variables, the target potential is computed much faster as 
+    a product of univariate potentials.
 
     Parameters
     ----------
@@ -31,6 +35,23 @@ class KernelHerdingTensorized:
         If not specified, then *distribution* and *candidate_set_size* must be in order to generate it automatically.
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
+
+    Example
+    -------
+    import openturns
+    import otkerneldesign
+
+    distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
+    dimension = distribution.geDimension()
+    # Kernel definition
+    ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
+    kernel = ot.ProductCovarianceModel(ker_list)
+    # Tensorized kernel herding design
+    kht = otkd.KernelHerdingTensorized(
+        kernel=kernel,
+        distribution=distribution
+    )
+    kht_design, _ = kht.select_design(size)  
     """
 
     def __init__(
@@ -98,7 +119,7 @@ class KernelHerdingTensorized:
 
         # tensorized potential?
         if distribution is not None:
-            self.examine_distribution(distribution)
+            self._examine_distribution(distribution)
         else:
             self._tensorized = False
 
@@ -121,13 +142,36 @@ class KernelHerdingTensorized:
                 )
             )
 
-    def examine_distribution(self, distribution):
+    def _examine_distribution(self, distribution):
         self._tensorized = False
         if distribution.getClassName() == "ComposedDistribution":
             if distribution.hasIndependentCopula():
                 self._tensorized = True
 
     def compute_target_potential(self):
+        """
+        Compute the potential of the target probability measure :math:`\mu`. 
+        In the case of independent input variables, this implementation is 
+        more efficient that the one offered by the ``KernelHerding`` class.
+
+        When :math:`\c{X}` is the cross product of 
+        one-dimensional sets :math:`\c{X}_{[i]}`, :math:`\c{X}=\c{X}_{[1]}\times\cdots\times\c{X}_{[d]}`, 
+        the measure :math:`\mu` is the product of its marginals :math:`\mu_{[i]}` on the :math:`\c{X}_{[i]}`.  
+        Then, the kernel :math:`k` is the product of one-dimensional kernels :math:`k_{[i]}`, and the 
+        one-dimensional integral in  :math:`P_{k_{[i]},\mu_{[i]}}(x)` is known explicitly 
+        for each :math:`i\in\{1,\ldots,d\}`. Indeed, for :math:`\vect{x}=(x_1,\ldots,x_d)\in\X`, 
+        we then have :math:`P_{k,\mu}(\vect{x})=\prod_{i=1}^d P_{k_{[i]},\mu_{[i]}}(x_i)`.
+
+        This method exploits this property by computing the potential as a product 
+        of univariate potentials, individually estimated by regular grids.  
+
+        Returns
+        -------
+        potential : potential of the measure :math:`\mu` defined by 
+        
+        .. :math:`P_{k,\mu}(\vect{x}) := \int k(x, x') d \mu(x') = \prod_{i=1}^d P_{k_{[i]},\mu_{[i]}}(x_i)`.
+
+        """
         if self._tensorized is None:
             return self._covmatrix.mean(axis=0)
 
@@ -179,7 +223,10 @@ class KernelHerdingTensorized:
 
     def compute_current_potential(self, design_indices):
         """
-        Compute the potential of the design and the weights of the design points.
+        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`X_n`.
+        Considering the discrete measure :math:`\zeta_n = \frac{1}{n} \sum_{i=1}^{n} \delta(x^{(i)})`, its potential is defined as 
+        
+        .. :math:`P_{\zeta_n}(x) = \frac{1}{n} \sum_{i=1}^{n} k(x, x^{(i)})`.
 
         Parameters
         ----------
@@ -199,7 +246,9 @@ class KernelHerdingTensorized:
 
     def compute_criterion(self, design_indices):
         """
-        Compute the criterion on a design.
+        Compute the criterion on a design. At any point of the candidate set, 
+        this criterion is simply given by the difference between the target potential 
+        and the potential of a discrete measure defined by a given design.
 
         Parameters
         ----------
@@ -217,7 +266,7 @@ class KernelHerdingTensorized:
 
     def select_design(self, size, initial_design_indices=[]):
         """
-        Select a design with kernel herding.
+        Select a design with tensorized kernel herding.
 
         Parameters
         ----------
@@ -293,16 +342,3 @@ class KernelHerdingTensorized:
 
         """
         return deepcopy(self._candidate_set)
-
-size = 20
-dimension = 2
-distribution = ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * dimension)
-ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
-kernel = ot.ProductCovarianceModel(ker_list)
-
-kh = KernelHerdingTensorized(
-    kernel=kernel,
-    candidate_set_size=2 ** 12,
-    distribution=distribution
-)
-uniform_design_points, uniform_design_indexes = kh.select_design(size)
