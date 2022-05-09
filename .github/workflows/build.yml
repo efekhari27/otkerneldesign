@@ -1,0 +1,33 @@
+name: Build
+on: [push, pull_request]
+jobs:
+  conda-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-version: latest
+      - name: Build
+        shell: bash -l {0}
+        run: |
+          conda install -y openturns pytest sphinx sphinx-gallery numpydoc pandoc
+          conda install -c conda-forge sphinx_rtd_theme
+          python setup.py install
+          pytest
+          sudo apt install -y texlive-latex-recommended texlive-fonts-recommended texlive-latex-extra
+          make html -C doc
+      - name: Upload
+        if: ${{ github.ref == 'refs/heads/master' }}          
+        run: |
+          git clone --depth 1 https://${{ secrets.GH_TOKEN }}@github.com/efekhari27/efekhari27.github.io.git /tmp/io
+          mkdir -p /tmp/io/otkerneldesign/master
+          cp -r doc/build/html/* /tmp/io/otkerneldesign/master
+          cd /tmp/io
+          touch .nojekyll
+          git config user.email "support@gh.com"
+          git config user.name "GitHub Actions"
+          git add -A .
+          if test `git diff HEAD | wc -c` -eq 0; then exit 0; fi
+          git commit -a -m "GitHub Actions build ${GITHUB_REPOSITORY} ${GITHUB_RUN_ID}"
+          git push --quiet origin main > /dev/null 2>&1
