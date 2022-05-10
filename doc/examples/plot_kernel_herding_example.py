@@ -2,8 +2,8 @@
 Kernel herding examples
 =======================
 
-The aim of this example is to provide simple examples to apply kernel herding
-on multivariate random inputs with or without a dependency structure.
+The aim of this page is to provide simple examples where kernel herding is
+applied to multivariate random inputs with or without a dependency structure.
 """
 import numpy as np
 import openturns as ot

@@ -33,22 +33,18 @@ class KernelHerding:
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
 
-    Example
-    -------
-    import openturns
-    import otkerneldesign
-
-    distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
-    dimension = distribution.geDimension()
-    # Kernel definition
-    ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
-    kernel = ot.ProductCovarianceModel(ker_list)
-    # Kernel herding design
-    kh = otkd.KernelHerding(
-        kernel=kernel,
-        distribution=distribution
-    )
-    kh_design, _ = kh.select_design(size=20)
+    Examples
+    --------
+    >>> import openturns as ot
+    >>> import otkerneldesign as otkd
+    >>> distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
+    >>> dimension = distribution.getDimension()
+    >>> # Kernel definition
+    >>> ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
+    >>> kernel = ot.ProductCovarianceModel(ker_list)
+    >>> # Kernel herding design
+    >>> kh = otkd.KernelHerding(kernel=kernel, distribution=distribution)
+    >>> kh_design, _ = kh.select_design(size=20)
     """
 
     def __init__(
@@ -185,13 +181,14 @@ class KernelHerding:
 
     def compute_target_potential(self):
         """
-        Compute the potential of the target probability measure :math:`\mu`.
+        Compute the potential of the target probability measure :math:`\\mu`.
 
         Returns
         -------
-        potential : potential of the measure :math:`\mu` defined by 
+        potential : potential of the measure :math:`\\mu` defined by 
         
-        .. :math:`P_{\mu}(x) := \int k(x, x') d \mu(x')`.
+        .. math::
+            P_{\\mu}(\\vect{x}) := \\int k(\\vect{x}, \\vect{x}') d \\mu(\\vect{x}').
 
         """
         if self._analytical is None:
@@ -243,10 +240,11 @@ class KernelHerding:
 
     def compute_current_potential(self, design_indices):
         """
-        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`X_n`.
-        Considering the discrete measure :math:`\zeta_n = \frac{1}{n} \sum_{i=1}^{n} \delta(x^{(i)})`, its potential is defined as 
+        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`\mat{X}_n`.
+        Considering the discrete measure :math:`\\zeta_n = \\frac{1}{n} \\sum_{i=1}^{n} \\delta(\\vect{x}^{(i)})`, its potential is defined as 
         
-        .. :math:`P_{\zeta_n}(x) = \frac{1}{n} \sum_{i=1}^{n} k(x, x^{(i)})`.
+        .. math::
+            P_{\\zeta_n}(\\vect{x}) := \\frac{1}{n} \\sum_{i=1}^{n} k(\\vect{x}, \\vect{x}^{(i)}).
 
         Parameters
         ----------
@@ -266,14 +264,14 @@ class KernelHerding:
 
     def compute_criterion(self, design_indices):
         """
-        Compute the criterion on a design. At any point of the candidate set, 
-        this criterion is simply given by the difference between the target potential 
-        and the potential of a discrete measure defined by a given design.
+        Compute the criterion on a design :math:`\mat{X}_n`. At any point of the candidate set, 
+        this criterion is given by the difference between the target potential 
+        and the potential of a discrete measure defined by the given design.
 
         Parameters
         ----------
         design_indices : list of positive int
-            List of the indices of the selected points
+            List of the indices of the selected points :math:`\mat{X}_n`
             in the Sample of candidate points
 
         Returns

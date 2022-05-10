@@ -13,18 +13,23 @@ from copy import deepcopy
 class KernelHerdingTensorized:
     """
     Incrementally select new design points with tensorized kernel herding. 
-    The main difference with the ``KernelHerding`` class is contained in the 
-    ``compute_target_potential`` method. Exploiting the independence of 
-    the input variables, the target potential is computed much faster as 
-    a product of univariate potentials.
+    The main difference with the :class:`~otkerneldesign.KernelHerding` class
+    is contained in the :meth:`compute_target_potential` method.
+    It requires the kernel to be a product of one-dimensional kernels
+    and the input random variables to be independent.
+    Exploiting these properties, it can compute
+    the target potential as a product of univariate potentials,
+    which is much faster.
 
     Parameters
     ----------
     kernel : :class:`openturns.CovarianceModel`
         Covariance kernel used to define potentials.
+        Must be a product of one-dimensional kernels.
         By default a product of Matern kernels with smoothness 5/2.
     distribution : :class:`openturns.Distribution`
         Distribution of the set of candidate points.
+        Must have an independent copula.
         If not specified, then *candidate_set* must be specified instead.
         Even if *candidate_set* is specified, can be useful if it allows the use of tensorized formulas.
     candidate_set_size : positive int
@@ -38,11 +43,11 @@ class KernelHerdingTensorized:
 
     Example
     -------
-    import openturns
-    import otkerneldesign
+    import openturns as ot
+    import otkerneldesign as otkd
 
     distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
-    dimension = distribution.geDimension()
+    dimension = distribution.getDimension()
     # Kernel definition
     ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
     kernel = ot.ProductCovarianceModel(ker_list)
@@ -51,7 +56,7 @@ class KernelHerdingTensorized:
         kernel=kernel,
         distribution=distribution
     )
-    kht_design, _ = kht.select_design(size)  
+    kht_design, _ = kht.select_design(20)
     """
 
     def __init__(
@@ -150,26 +155,35 @@ class KernelHerdingTensorized:
 
     def compute_target_potential(self):
         """
-        Compute the potential of the target probability measure :math:`\mu`. 
+        Compute the potential of the target probability measure :math:`\\mu`. 
         In the case of independent input variables, this implementation is 
-        more efficient that the one offered by the ``KernelHerding`` class.
+        more efficient that the one offered by the :class:`~otkerneldesign.KernelHerding` class.
 
-        When :math:`\c{X}` is the cross product of 
-        one-dimensional sets :math:`\c{X}_{[i]}`, :math:`\c{X}=\c{X}_{[1]}\times\cdots\times\c{X}_{[d]}`, 
-        the measure :math:`\mu` is the product of its marginals :math:`\mu_{[i]}` on the :math:`\c{X}_{[i]}`.  
-        Then, the kernel :math:`k` is the product of one-dimensional kernels :math:`k_{[i]}`, and the 
-        one-dimensional integral in  :math:`P_{k_{[i]},\mu_{[i]}}(x)` is known explicitly 
-        for each :math:`i\in\{1,\ldots,d\}`. Indeed, for :math:`\vect{x}=(x_1,\ldots,x_d)\in\X`, 
-        we then have :math:`P_{k,\mu}(\vect{x})=\prod_{i=1}^d P_{k_{[i]},\mu_{[i]}}(x_i)`.
+        Let :math:`\\cX` be a cross product of 
+        one-dimensional sets :math:`\\cX_{[i]}`, :math:`\\cX=\\cX_{[1]}\\times\\cdots\\times\\cX_{[d]}`, 
+        and let the measure :math:`\\mu` be the product of its marginals :math:`\\mu_{[i]}` on the :math:`\\cX_{[i]}`.  
+        When the kernel :math:`k` is the product of one-dimensional kernels :math:`k_{[i]}`,
+        then for all :math:`\\vect{x}=(x_1,\\ldots,x_d)\\in\\cX`,
+        the potential :math:`P_{k,\\mu}(\\vect{x})` can be expressed as
+        
+        .. math::
+            P_{k,\\mu}(\\vect{x}) := \\int_\\cX k(\\vect{x}, \\vect{x}') d \\mu(\\vect{x}')
+            = \\prod_{i=1}^d \\int_{\\cX_{[i]}} k_{[i]}(x_i, x_i') d \\mu_{[i]}(x_i')
+            = \\prod_{i=1}^d P_{k_{[i]},\\mu_{[i]}}(x_i),
+        
+        where for each :math:`i\\in\\{1,\\ldots,d\\}`, :math:`P_{k_{[i]},\\mu_{[i]}}`
+        is the one-dimensional potential with respect to the distribution :math:`\\mu_{[i]}`
+        and the kernel :math:`k_{[i]}`.
 
         This method exploits this property by computing the potential as a product 
         of univariate potentials, individually estimated by regular grids.  
 
         Returns
         -------
-        potential : potential of the measure :math:`\mu` defined by 
+        potential : potential of the measure :math:`\\mu` computed as
         
-        .. :math:`P_{k,\mu}(\vect{x}) := \int k(x, x') d \mu(x') = \prod_{i=1}^d P_{k_{[i]},\mu_{[i]}}(x_i)`.
+        .. math::
+            P_{k,\\mu}(\\vect{x}) = \\prod_{i=1}^d P_{k_{[i]},\\mu_{[i]}}(x_i).
 
         """
         if self._tensorized is None:
@@ -223,10 +237,11 @@ class KernelHerdingTensorized:
 
     def compute_current_potential(self, design_indices):
         """
-        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`X_n`.
-        Considering the discrete measure :math:`\zeta_n = \frac{1}{n} \sum_{i=1}^{n} \delta(x^{(i)})`, its potential is defined as 
+        Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`\mat{X}_n`.
+        Considering the discrete measure :math:`\\zeta_n = \\frac{1}{n} \\sum_{i=1}^{n} \\delta(\\vect{x}^{(i)})`, its potential is defined as 
         
-        .. :math:`P_{\zeta_n}(x) = \frac{1}{n} \sum_{i=1}^{n} k(x, x^{(i)})`.
+        .. math::
+            P_{\\zeta_n}(x) = \\frac{1}{n} \\sum_{i=1}^{n} k(\\vect{x}, \\vect{x}^{(i)}).
 
         Parameters
         ----------
@@ -236,7 +251,7 @@ class KernelHerdingTensorized:
 
         Returns
         -------
-        potential : potential of the measure defined by the design
+        potential : potential of the measure defined by the design :math:`\mat{X}_n`.
 
         """
         if len(design_indices) == 0:
