@@ -11,8 +11,8 @@ import numpy as np
 
 class TestSetWeighting:
     """
-    Optimally-weighting a test-set for estimating a machine learning performance 
-    metric (e.g, Integrated Squared Error, predictivity coefficient).
+    Weighting of a test-set for optimal machine learning performance
+    metric (e.g, Integrated Squared Error, predictivity coefficient) estimation.
 
     Parameters
     ----------
@@ -28,9 +28,9 @@ class TestSetWeighting:
         Covariance kernel used to define potentials.
         By default a product of Matern kernels with smoothness 5/2.
 
-    Example
-    -------
-    To do     
+    Examples
+    --------
+    TODO
     """
     def __init__(
         self,
@@ -109,7 +109,7 @@ class TestSetWeighting:
         ----------
         residuals: list 
                     List of residuals in the case of a non-interpolating machine learning model. 
-                    By default set to `None` for interpolating model (e.g., Gaussian process regression).
+                    By default set to `None` for an interpolating model (e.g., Gaussian process regression).
 
         Return
         ------

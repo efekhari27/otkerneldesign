@@ -28,7 +28,7 @@ class KernelHerdingTensorized:
         Must be a product of one-dimensional kernels.
         By default a product of Matern kernels with smoothness 5/2.
     distribution : :class:`openturns.Distribution`
-        Distribution of the set of candidate points.
+        Distribution the design points must represent.
         Must have an independent copula.
         If not specified, then *candidate_set* must be specified instead.
         Even if *candidate_set* is specified, can be useful if it allows the use of tensorized formulas.
@@ -41,22 +41,18 @@ class KernelHerdingTensorized:
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
 
-    Example
-    -------
-    import openturns as ot
-    import otkerneldesign as otkd
-
-    distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
-    dimension = distribution.getDimension()
-    # Kernel definition
-    ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
-    kernel = ot.ProductCovarianceModel(ker_list)
-    # Tensorized kernel herding design
-    kht = otkd.KernelHerdingTensorized(
-        kernel=kernel,
-        distribution=distribution
-    )
-    kht_design, _ = kht.select_design(20)
+    Examples
+    --------
+    >>> import openturns as ot
+    >>> import otkerneldesign as otkd
+    >>> distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
+    >>> dimension = distribution.getDimension()
+    >>> # Kernel definition
+    >>> ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
+    >>> kernel = ot.ProductCovarianceModel(ker_list)
+    >>> # Tensorized kernel herding design
+    >>> kht = otkd.KernelHerdingTensorized(kernel=kernel, distribution=distribution)
+    >>> kht_design, _ = kht.select_design(20)
     """
 
     def __init__(
@@ -180,7 +176,8 @@ class KernelHerdingTensorized:
 
         Returns
         -------
-        potential : potential of the measure :math:`\\mu` computed as
+        potential : numpy.array
+                    Potential of the measure :math:`\\mu` computed as
         
         .. math::
             P_{k,\\mu}(\\vect{x}) = \\prod_{i=1}^d P_{k_{[i]},\\mu_{[i]}}(x_i).
@@ -273,7 +270,8 @@ class KernelHerdingTensorized:
 
         Returns
         -------
-        current_potential - target_potential : vector (numpy array) of the values taken by the criterion on all candidate points
+        current_potential - target_potential : numpy.array
+                                                Vector of the values taken by the criterion on all candidate points
 
         """
         current_potential = self.compute_current_potential(design_indices)

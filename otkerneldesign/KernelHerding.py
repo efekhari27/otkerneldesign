@@ -21,7 +21,7 @@ class KernelHerding:
         Covariance kernel used to define potentials.
         By default a product of Matern kernels with smoothness 5/2.
     distribution : :class:`openturns.Distribution`
-        Distribution of the set of candidate set.
+        Distribution the design points must represent.
         If not specified, then *candidate_set* must be specified instead.
         Even if *candidate_set* is specified, can be useful if it allows the use of analytical formulas.
     candidate_set_size : positive int
@@ -185,7 +185,8 @@ class KernelHerding:
 
         Returns
         -------
-        potential : potential of the measure :math:`\\mu` defined by 
+        potential : numpy.array
+                    Potential of the measure :math:`\\mu` defined by
         
         .. math::
             P_{\\mu}(\\vect{x}) := \\int k(\\vect{x}, \\vect{x}') d \\mu(\\vect{x}').
@@ -254,7 +255,8 @@ class KernelHerding:
 
         Returns
         -------
-        potential : potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
+        potential : numpy.array
+                    Potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
 
         """
         if len(design_indices) == 0:
@@ -276,8 +278,8 @@ class KernelHerding:
 
         Returns
         -------
-        current_potential - target_potential : vector (numpy array) of the values taken by the criterion on all candidate points
-
+        current_potential - target_potential : numpy.array
+                                                Vector of the values taken by the criterion on all candidate points
         """
         current_potential = self.compute_current_potential(design_indices)
         return current_potential - self._target_potential

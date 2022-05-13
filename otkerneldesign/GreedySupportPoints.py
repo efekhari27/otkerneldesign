@@ -16,7 +16,7 @@ class GreedySupportPoints:
     Parameters
     ----------
     distribution : :class:`openturns.Distribution`
-        Distribution of the set of candidate set.
+        Distribution the design points must represent.
         If not specified, then *candidate_set* must be specified instead.
         Even if *candidate_set* is specified, can be useful if it allows the use of analytical formulas.
     candidate_set_size : positive int
@@ -28,16 +28,15 @@ class GreedySupportPoints:
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
 
-    Example
-    -------
-    import openturns
-    import otkerneldesign
-
-    distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
-    dimension = distribution.geDimension()
-    # Greedy support points design
-    sp = otkd.GreedySupportPoints(distribution=distribution)
-    sp_design = sp.select_design(size)
+    Examples
+    --------
+    >>> import openturns as ot
+    >>> import otkerneldesign as otkd
+    >>> distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
+    >>> dimension = distribution.getDimension()
+    >>> # Greedy support points design
+    >>> sp = otkd.GreedySupportPoints(distribution=distribution)
+    >>> sp_design = sp.select_design(size)
     """
     def __init__(
         self, 
@@ -97,9 +96,9 @@ class GreedySupportPoints:
         
     def compute_distance_matrix(self, batch_nb=8):
         """
-        Compute the euclidian distance matrix between each couples of candidate points. 
+        Compute the matrix of pair-wise Euclidean distances between all candidate points.
         To avoid saturating the memory, this symmetric matrix is computed by 
-        blocks and using half-precision floating-point format (e.g., `np.float16`).
+        blocks and using half-precision floating-point format (e.g., `numpy.float16`).
 
         Parameters
         ----------
@@ -147,15 +146,18 @@ class GreedySupportPoints:
 
     def compute_target_potential(self):
         """
-        Compute the potential of the target probability measure :math:`\mu`.
+        Compute the potential of the target probability measure :math:`\\mu`.
 
         Returns
         -------
-        potential : potential of the measure :math:`\mu` computed over the N-sized 
-        candidate set and defined for the characteristic energy-distance kernel of Székely and Rizzo by
+        potential : numpy.array
+                    Potential of the measure :math:`\\mu` computed over the N-sized
+                    candidate set and defined for the characteristic energy-distance
+                    kernel of Székely and Rizzo by
         
-        .. :math:`P_{\mu}(x) := \int k(x, x') d \mu(x')
-                              = \frac{1}{N} \sum_{k=1}^N \|\vect{x}-\vect{x}'^{(k)}\|`.
+        .. math::
+            P_{\\mu}(x) := \\int k(x, x') d \\mu(x')
+                         = \\frac{1}{N} \\sum_{k=1}^N \\|\\vect{x}-\\vect{x}'^{(k)}\\|.
         """
         potentials = self.distances.mean(axis=0)
         return potentials
@@ -163,12 +165,13 @@ class GreedySupportPoints:
     def compute_current_potential(self, design_indices):
         """
         Compute the potential of the discrete measure (a.k.a, kernel mean embedding) 
-        defined by the design :math:`X_n`. Considering the discrete measure 
-        :math:`\zeta_n = \frac{1}{n} \sum_{i=1}^{n} \delta(x^{(i)})`, 
+        defined by the design :math:`\\vect{X}_n`. Considering the discrete measure
+        :math:`\\zeta_n = \\frac{1}{n} \\sum_{i=1}^{n} \\delta(\\vect{x}^{(i)})`,
         its potential is defined for the characteristic energy-distance kernel of Székely and Rizzo
         
-        .. :math:`P_{\zeta_n}(x) = \frac{1}{n} \sum_{i=1}^{n} k(\vect{x}, \vect{x}^{(i)})
-                                 = \frac{1}{n} \sum_{i=1}^{n} \|\vect{x}-\vect{x}^{(i)}\|`.
+        .. math::
+            P_{\\zeta_n}(x) = \\frac{1}{n} \\sum_{i=1}^{n} k(\\vect{x}, \\vect{x}^{(i)})
+                            = \\frac{1}{n} \\sum_{i=1}^{n} \\|\\vect{x}-\\vect{x}^{(i)}\\|.
 
         Parameters
         ----------
@@ -178,7 +181,8 @@ class GreedySupportPoints:
 
         Returns
         -------
-        potential : potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
+        potential : numpy.array
+                    Potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
 
         """
         distances_to_design = self.distances[:, design_indices]
