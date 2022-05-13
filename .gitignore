@@ -4,6 +4,7 @@
 /*__pycache__/
 examples/*__pycache__/
 otkerneldesign/*__pycache__/
+doc/examples/__pycache__/
 
 # ~ files
 *~
@@ -39,3 +40,6 @@ otkerneldesign/*__pycache__/
 build*/
 otkerneldesign.egg-info*/
 dist*/
+install/
+*_generated/
+doc/auto_example
