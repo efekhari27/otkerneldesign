@@ -33,10 +33,9 @@ class GreedySupportPoints:
     >>> import openturns as ot
     >>> import otkerneldesign as otkd
     >>> distribution = ot.ComposedDistribution([ot.Normal(0.5, 0.1)] * 2)
-    >>> dimension = distribution.getDimension()
     >>> # Greedy support points design
     >>> sp = otkd.GreedySupportPoints(distribution=distribution)
-    >>> sp_design = sp.select_design(size)
+    >>> sp_design = sp.select_design(20)
     """
     def __init__(
         self, 
