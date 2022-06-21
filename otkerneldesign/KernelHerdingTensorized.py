@@ -209,7 +209,7 @@ class KernelHerdingTensorized:
         inputs = ["x{}".format(i) for i in range(len(marginal_list))]
         for ind, (marginal, kernel) in enumerate(zip(marginal_list, kernel_list)):
             # regular grid
-            uniform_nodes = ot.RegularGrid(0.01, 0.01, 99)
+            uniform_nodes = ot.RegularGrid(0.0, 0.001, 1001)
             # Apply quantile function
             nodes = marginal.computeQuantile(uniform_nodes.getValues())
             # Compute covariance matrix
