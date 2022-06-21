@@ -18,10 +18,10 @@ Additionally, optimal weights for quadrature and for a new estimator for validat
 
 ## Documentation & references
 
-- Package documentation: https://efekhari27.github.io/otkerneldesign/master/index.html
-- Usage for Machine Learning model validation: https://hal.archives-ouvertes.fr/hal-03523695v2/document
-- Support points: https://projecteuclid.org/journals/annals-of-statistics/volume-46/issue-6A/Support-points/10.1214/17-AOS1629.full
-- Kernel herding: https://arxiv.org/abs/1203.3472 
+- [Package documentation](https://efekhari27.github.io/otkerneldesign/master/index.html)
+- [Usage in Machine Learning model validation](https://hal.archives-ouvertes.fr/hal-03523695v2/document)
+- [Support points](https://projecteuclid.org/journals/annals-of-statistics/volume-46/issue-6A/Support-points/10.1214/17-AOS1629.full)
+- [Kernel herding](https://arxiv.org/abs/1203.3472)
 
 ## Example
 
