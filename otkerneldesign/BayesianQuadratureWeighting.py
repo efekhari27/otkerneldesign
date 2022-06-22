@@ -9,7 +9,7 @@ import openturns as ot
 import numpy as np
 
 
-class BayesianQuadraturetWeighting:
+class BayesianQuadratureWeighting:
     """
     Optimally-weighting a sample for probabilistic integration.
 
@@ -31,7 +31,17 @@ class BayesianQuadraturetWeighting:
 
     Example
     -------
-    TO DO 
+    >>> import openturns as ot
+    >>> import otkerneldesign as otkd
+    >>> distribution = ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * 2)
+    >>> mc_sample = distribution.getSample(20)
+    >>> ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * 2
+    >>> kernel = ot.ProductCovarianceModel(ker_list)
+    >>> qw = otkd.BayesianQuadratureWeighting(
+    >>>     kernel=kernel,
+    >>>     distribution=distribution
+    >>> )
+    >>> optimal_weights = qw.compute_bayesian_quadrature_weights(mc_sample)
     """
 
     def __init__(

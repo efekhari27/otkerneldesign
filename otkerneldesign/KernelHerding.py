@@ -9,6 +9,7 @@ import numpy as np
 import openturns as ot
 from scipy.special import erfc
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 
 class KernelHerding:
@@ -55,6 +56,7 @@ class KernelHerding:
         candidate_set=None,
         initial_design=None,
     ):
+        self._method_label = "kernel herding"
         # Inconsistency
         if candidate_set_size is not None and candidate_set is not None:
             raise ValueError(
@@ -123,6 +125,7 @@ class KernelHerding:
             self._covmatrix_indices = [-1] * self._candidate_set.getSize()
             self._covmatrix = np.zeros((0, self._candidate_set.getSize()))
         self._target_potential = self.compute_target_potential()
+        self._target_energy = self.compute_target_energy()
 
     def _set_kernel(self, kernel):
         if kernel.getInputDimension() == self._dimension:
@@ -239,6 +242,22 @@ class KernelHerding:
 
         return potential
 
+    def compute_target_energy(self):
+        """
+        Compute the energy of the target probability measure :math:`\\mu`.
+
+        Returns
+        -------
+        potential : float
+                    Energy of the measure :math:`\\mu` defined by
+        
+        .. math::
+            E_{\\mu} := \\int \\int k(\\vect{x}, \\vect{x}') d \\mu(\\vect{x}) d \\mu(\\vect{x}').
+
+        """
+        target_energy = self._target_potential.mean()
+        return target_energy
+
     def compute_current_potential(self, design_indices):
         """
         Compute the potential of the discrete measure (a.k.a, kernel mean embedding) defined by the design :math:`\mat{X}_n`.
@@ -257,12 +276,34 @@ class KernelHerding:
         -------
         potential : numpy.array
                     Potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
-
         """
         if len(design_indices) == 0:
             return np.zeros(self._candidate_set.getSize())
         covmatrix_design_indices_rows = self._extract_from_covmatrix(design_indices)
         return covmatrix_design_indices_rows.mean(axis=0)
+    
+    def compute_current_energy(self, design_indices):
+        """
+        Compute the energy of the discrete measure defined by the design :math:`\mat{X}_n`.
+        Considering the discrete measure :math:`\\zeta_n = \\frac{1}{n} \\sum_{i=1}^{n} \\delta(\\vect{x}^{(i)})`, its energy is defined as 
+        
+        .. math::
+            E_{\\zeta_n} := \\frac{1}{n^2} \\sum_{i=1}^{n} \\sum_{j=1}^{n} k(\\vect{x}^{(i)}, \\vect{x}^{(j)}).
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        potential : float
+                    Energy of the discrete measure defined by the design
+        """
+        current_potential = self.compute_current_potential(design_indices)
+        current_energy = current_potential.mean()
+        return current_energy
 
     def compute_criterion(self, design_indices):
         """
@@ -362,4 +403,35 @@ class KernelHerding:
 
         """
         return deepcopy(self._candidate_set)
+
+    def draw_energy_convergence(self, design_indices):
+        """
+        Draws the convergence of the energy for a set of points selected among the candidate set.
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        fig : matplotlib.Figure
+                    Energy convergence of the design of experiments
+        
+        plot_data : data used to plot the figure
+        """
+        energies = []
+        sizes = range(10, len(design_indices))
+        for i in sizes:
+            energies.append(self.compute_current_energy(design_indices[:i]))
+        fig, ax = plt.subplots(1, figsize=(9, 6))
+        plot_data, = ax.plot(sizes, energies, label=self._method_label)
+        ax.axhline(self._target_energy, color='k', label='target')
+        ax.set_title('Energy convergence')
+        ax.set_xlabel('design size ($n$)')
+        ax.set_ylabel('Energy')
+        ax.legend(loc='best')
+        plt.close()
+        return fig, plot_data
 
