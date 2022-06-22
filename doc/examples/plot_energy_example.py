@@ -19,7 +19,7 @@ dimension = 5
 distribution = ot.ComposedDistribution([unifrom] * dimension)
 
 # %%
-# Kernel herding standard and tensorized 
+# Standard and tensorized kernel herding 
 # --------------------------------------
 
 size = 400
