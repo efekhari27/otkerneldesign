@@ -5,7 +5,7 @@ This Python module generates designs of experiments based on kernel methods such
 - KernelHerdingTensorized
 - GreedySupportPoints
 
-Additionally, optimal weights for quadrature and for a new estimator for validation designs are provided by the classes:
+Additionally, optimal weights for quadrature and validation designs are provided by the classes:
 
 - BayesianQuadratureWeighting
 - TestSetWeighting
