@@ -47,7 +47,9 @@ kht_design, kht_indexes = kht.select_design(size)
 # ------------------
 # The main difference between the two classes is 
 # the way to compute the target potential function. 
-# For independent inputs, the TensorizedKernelHerding 
+# With independent inputs and a covariance kernel
+# built as the product of one-dimensional kernels,
+# the TensorizedKernelHerding 
 # allows to write the multivariate potential as a product 
 # of univariate potentials, easing its computation in high dimension.
 
