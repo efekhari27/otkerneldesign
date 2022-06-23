@@ -9,12 +9,9 @@ Usage
     python setup.py install
 """
 
-
 import re
 import os
-from distutils.core import setup
-
-from setuptools import find_packages
+from setuptools import setup, find_packages
 
 # Get the version from __init__.py
 path = os.path.join(os.path.dirname(__file__), 'otkerneldesign', '__init__.py')
@@ -38,13 +35,16 @@ setup(
     license='LGPLv3+',
     author="Elias Fekhari, Joseph Muré",
     author_email='elias.fekhari@edf.fr',
-    packages=find_packages(),
+    packages=['otkerneldesign', 'test'],
     url='https://github.com/efekhari27/otkerneldesign',
     keywords=['OpenTURNS', 'KernelHerding'],
     description="Design of experiments based on kernel methods",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     install_requires=[
           "numpy",
           "scipy", 
+          "matplotlib",
           "openturns>=1.17"
       ],
     include_package_data=True,
