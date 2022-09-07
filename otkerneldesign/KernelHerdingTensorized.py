@@ -36,7 +36,7 @@ class KernelHerdingTensorized:
         Size of the set of all candidate points.
         Unnecessary if *candidate_set* is specified. Otherwise, :math:`2^{12}` by default.
     candidate_set : 2-d list of float
-        Large sample that represents a distribution.
+        Large sample that empirically represents a distribution.
         If not specified, then *distribution* and *candidate_set_size* must be in order to generate it automatically.
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
@@ -118,6 +118,7 @@ class KernelHerdingTensorized:
                 range(candidate_set_size, candidate_set_size + len(initial_design))
             )
             self._candidate_set.add(initial_design)
+        self._initial_size = len(self._design_indices)
 
         # tensorized potential?
         if distribution is not None:
@@ -318,7 +319,7 @@ class KernelHerdingTensorized:
         current_potential = self.compute_current_potential(design_indices)
         return current_potential - self._target_potential
 
-    def select_design(self, size, initial_design_indices=[]):
+    def select_design(self, size):
         """
         Select a design with tensorized kernel herding.
 
@@ -339,21 +340,14 @@ class KernelHerdingTensorized:
             in the Sample of candidate points
 
         """
-        current_design_indices = deepcopy(initial_design_indices)
-        current_design_indices.extend(self._design_indices)
-        current_design_indices = list(set(current_design_indices))
-
-        design_indices_orig_len = len(current_design_indices)
-        design = ot.Sample(size, self._dimension)
-
-        for k in range(size):
-            current_potential = self.compute_current_potential(current_design_indices)
-            crit = current_potential - self._target_potential
-            iopt = crit.argmin()
-            design[k] = self._candidate_set[iopt]
-            current_design_indices.append(iopt)
-
-        return design, current_design_indices[design_indices_orig_len:]
+        design_indices = deepcopy(self._design_indices)
+        for _ in range(size):
+            current_potential = self.compute_current_potential(design_indices)
+            criteria = current_potential - self._target_potential
+            next_index = np.argmin(criteria)
+            design_indices.append(next_index)
+        design = self._candidate_set[design_indices[self._initial_size:]]
+        return design
 
     def _extract_from_covmatrix(self, design_indices):
         """
@@ -364,7 +358,7 @@ class KernelHerdingTensorized:
         ----------
         design_indices : list of positive int
             List of the indices of the lines of the covariance matrix to select.
-            Each index correponds to a Point in the Sample of candidate points.
+            Each index corresponds to a Point in the Sample of candidate points.
 
         Returns
         -------

@@ -203,6 +203,8 @@ class GreedySupportPoints:
                     Potential of the discrete measure defined by the design (a.k.a, kernel mean embedding)
 
         """
+        if len(design_indices) == 0:
+            return np.zeros(self._candidate_set.getSize())
         distances_to_design = self.distances[:, design_indices]
         current_potential = distances_to_design.mean(axis=1)
         current_potential *= len(design_indices) / (len(design_indices) + 1)
@@ -245,16 +247,14 @@ class GreedySupportPoints:
         design : :class:`openturns.Sample`
             Sample of all selected points
         """
+        design_indices = [index for index in self._design_indices]
         for _ in range(size):
-            if len(self._design_indices)==0:
-                criteria = self._target_potential
-            else:
-                current_potential = self.compute_current_potential(self._design_indices)
-                criteria = self._target_potential - current_potential
+            current_potential = self.compute_current_potential(design_indices)
+            criteria = self._target_potential - current_potential
             next_index = np.argmin(criteria)
-            self._design_indices = np.append(self._design_indices, next_index)
-        sample = self._candidate_set[self._design_indices[self._initial_size:]]
-        return sample
+            design_indices = np.append(design_indices, next_index)
+        design = self._candidate_set[design_indices[self._initial_size:]]
+        return design
 
     def draw_energy_convergence(self, design_indices):
         """
