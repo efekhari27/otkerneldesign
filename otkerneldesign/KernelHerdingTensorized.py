@@ -421,3 +421,29 @@ class KernelHerdingTensorized:
         ax.legend(loc='best')
         plt.close()
         return fig, plot_data
+
+    def get_indices(self, sample):
+        """
+        When provided a subsample of the candidate set, returns the indices of its points in the candidate set.
+
+        Parameters
+        ----------
+        sample : 2-d list of float
+            A subsample of the candidate set.
+
+        Returns
+        -------
+        indices : list of int
+            Indices of the points of the sample within the candidate set.
+        """
+        sample = np.array(sample)
+        if len(sample.shape) != 2:
+            raise ValueError("Not a sample: shape is {} instead of 2.".format(len(sample.shape)))
+        candidate_array = np.array(self._candidate_set) # convert to numpy array so np.where works
+        indices = []
+        for sample_index, pt in enumerate(sample):
+            index = np.where((candidate_array==pt).prod(axis=1))[0]
+            if len(index) != 1:
+                raise ValueError("The point {}, with index {} in the sample, is not in the candidate set.".format(pt, sample_index))
+            indices.extend(index)
+        return indices

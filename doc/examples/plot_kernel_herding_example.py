@@ -26,7 +26,7 @@ class DrawFunctions:
         self.nodes = mesh.getVertices()
         self.X0, self.X1 = np.array(self.nodes).T.reshape(2, self.grid_size, self.grid_size)
 
-    def draw_2D_controur(self, title, function=None, distribution=None, colorbar=cm.coolwarm):
+    def draw_2D_contour(self, title, function=None, distribution=None, colorbar=cm.coolwarm):
         fig = plt.figure(figsize=(7, 6))
         if distribution is not None:
             Zpdf = np.array(distribution.computePDF(self.nodes)).reshape(self.grid_size, self.grid_size)
@@ -56,7 +56,7 @@ distribution = ot.ComposedDistribution([mixture, normal])
 # Draw a contour plot of the PDF.
 
 d = DrawFunctions()
-fig = d.draw_2D_controur('Bivariate random mixture', None, distribution)
+fig = d.draw_2D_contour('Bivariate random mixture', None, distribution)
 plt.show()
 
 
@@ -81,7 +81,7 @@ kh = otkd.KernelHerding(
     candidate_set_size=2 ** 12,
     distribution=distribution
 )
-kh_design, _ = kh.select_design(size)
+kh_design = kh.select_design(size)
 
 # %%
 # Because the copula of the distribution is independent
@@ -94,13 +94,13 @@ kht = otkd.KernelHerdingTensorized(
     candidate_set_size=2 ** 12,
     distribution=distribution
 )
-kht_design, _ = kht.select_design(size)
+kht_design = kht.select_design(size)
 
 
 # %%
 # Draw the designs.
 
-fig = d.draw_2D_controur('Sampling a bivariate random mixture', None, distribution)
+fig = d.draw_2D_contour('Sampling a bivariate random mixture', None, distribution)
 plt.scatter(mc_design[:, 0], mc_design[:, 1], label='Monte Carlo (n={})'.format(size), marker='o', alpha=0.5)
 plt.scatter(kh_design[:, 0], kh_design[:, 1], label='Kernel Herding (n={})'.format(size), marker='X', color='C1')
 plt.scatter(kht_design[:, 0], kht_design[:, 1], label='Kernel Herding Tensorized (n={})'.format(size), marker='^', color='C2')
@@ -116,7 +116,7 @@ plt.show()
 # class cannot be used in this case. 
 
 distribution.setCopula(ot.ClaytonCopula(2.))
-fig = d.draw_2D_controur('Bivariate random mixture', None, distribution)
+fig = d.draw_2D_contour('Bivariate random mixture', None, distribution)
 plt.show()
 
 # %%
@@ -128,12 +128,12 @@ kh = otkd.KernelHerding(
     candidate_set_size=2 ** 12,
     distribution=distribution
 )
-kh_design, _ = kh.select_design(size)
+kh_design = kh.select_design(size)
 
 # %%
 # Draw the designs.
 
-fig = d.draw_2D_controur('Sampling a bivariate random mixture', None, distribution)
+fig = d.draw_2D_contour('Sampling a bivariate random mixture', None, distribution)
 plt.scatter(mc_design[:, 0], mc_design[:, 1], label='Monte Carlo (n={})'.format(size), marker='o', alpha=0.5)
 plt.scatter(kh_design[:, 0], kh_design[:, 1], label='Kernel Herding (n={})'.format(size), marker='X', color='C1')
 plt.legend()
