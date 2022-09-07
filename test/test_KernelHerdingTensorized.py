@@ -8,8 +8,8 @@ import openturns as ot
 import openturns.testing as ott
 
 
-class CheckKernelHerdingKernelHerdingTensorized(unittest.TestCase):
-    def test_KernelHerding(self):
+class CheckKernelHerdingTensorized(unittest.TestCase):
+    def test_KernelHerdingTensorized(self):
         size = 20
         dimension = 2
         distribution = ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * dimension)
