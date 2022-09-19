@@ -33,14 +33,14 @@ kh = otkd.KernelHerding(
     candidate_set_size=2 ** 14,
     distribution=distribution
 )
-kh_design, kh_indexes = kh.select_design(size)
+kh_design = kh.select_design(size)
 # Tensorized kernel herding design
 kht = otkd.KernelHerdingTensorized(
     kernel=kernel,
     candidate_set_size=2 ** 14,
     distribution=distribution
 )
-kht_design, kht_indexes = kht.select_design(size)
+kht_design = kht.select_design(size)
 
 # %%
 # Energy convergence
@@ -65,8 +65,8 @@ print("Target energy relative error: {:.3%}".format(target_energy_rerror))
 # Draw the energy convergence of KernelHerding and TensorizedKernelHerding designs.
 # Notice how they both converge towards their respective target energies.
 
-fig1, plot_data1 = kh.draw_energy_convergence(kh_indexes)
-fig2, plot_data2 = kht.draw_energy_convergence(kht_indexes)
+fig1, plot_data1 = kh.draw_energy_convergence(kh.get_indices(kh_design))
+fig2, plot_data2 = kht.draw_energy_convergence(kht.get_indices(kht_design))
 
 fig3, ax3 = plt.subplots(1, sharey=True, sharex=True)
 # Plot data from fig1 and fig2
@@ -79,3 +79,5 @@ ax3.set_xlabel('design size ($n$)')
 ax3.set_ylabel('Energy')
 ax3.legend(loc='best')
 plt.show()
+
+# %%

@@ -26,7 +26,7 @@ class DrawFunctions:
         self.nodes = mesh.getVertices()
         self.X0, self.X1 = np.array(self.nodes).T.reshape(2, self.grid_size, self.grid_size)
 
-    def draw_2D_controur(self, title, function=None, distribution=None, colorbar=cm.coolwarm):
+    def draw_2D_contour(self, title, function=None, distribution=None, colorbar=cm.coolwarm):
         fig = plt.figure(figsize=(7, 6))
         if distribution is not None:
             Zpdf = np.array(distribution.computePDF(self.nodes)).reshape(self.grid_size, self.grid_size)
@@ -43,7 +43,7 @@ class DrawFunctions:
         return fig
 
     def draw_candidates(self, candidate_sample, title='Design of experiments'):
-        fig = d.draw_2D_controur(title, None, distribution)
+        fig = d.draw_2D_contour(title, None, distribution)
         plt.title(title)
         plt.xlabel("$x_0$")
         plt.ylabel("$x_1$")
@@ -66,7 +66,7 @@ distribution = ot.ComposedDistribution([mixture, normal])
 # Draw a contour plot of the PDF.
 
 d = DrawFunctions()
-fig = d.draw_2D_controur('Bivariate random mixture', None, distribution)
+fig = d.draw_2D_contour('Bivariate random mixture', None, distribution)
 plt.show()
 
 
@@ -76,7 +76,7 @@ plt.show()
 # class cannot be used in this case.
 
 distribution.setCopula(ot.ClaytonCopula(2.))
-fig = d.draw_2D_controur('Bivariate random mixture', None, distribution)
+fig = d.draw_2D_contour('Bivariate random mixture', None, distribution)
 plt.show()
 
 # %%
@@ -97,7 +97,7 @@ kh = otkd.KernelHerding(
     candidate_set_size=2 ** 12,
     distribution=distribution
 )
-kh_design, kh_indices = kh.select_design(size)
+kh_design = kh.select_design(size)
 
 # %%
 # Draw the designs and the empirical representation 

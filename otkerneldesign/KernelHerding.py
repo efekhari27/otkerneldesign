@@ -110,6 +110,7 @@ class KernelHerding:
                 range(candidate_set_size, candidate_set_size + len(initial_design))
             )
             self._candidate_set.add(initial_design)
+        self._initial_size = len(self._design_indices)
 
         # Analytical potential?
         if distribution is not None:
@@ -346,21 +347,14 @@ class KernelHerding:
             in the Sample of candidate points
 
         """
-        current_design_indices = deepcopy(initial_design_indices)
-        current_design_indices.extend(self._design_indices)
-        current_design_indices = list(set(current_design_indices))
-
-        design_indices_orig_len = len(current_design_indices)
-        design = ot.Sample(size, self._dimension)
-
-        for k in range(size):
-            current_potential = self.compute_current_potential(current_design_indices)
-            crit = current_potential - self._target_potential
-            iopt = crit.argmin()
-            design[k] = self._candidate_set[iopt]
-            current_design_indices.append(iopt)
-
-        return design, current_design_indices[design_indices_orig_len:]
+        design_indices = deepcopy(self._design_indices)
+        for _ in range(size):
+            current_potential = self.compute_current_potential(design_indices)
+            criteria = current_potential - self._target_potential
+            next_index = np.argmin(criteria)
+            design_indices.append(next_index)
+        design = self._candidate_set[design_indices[self._initial_size:]]
+        return design
 
     def _extract_from_covmatrix(self, design_indices):
         """
@@ -435,3 +429,28 @@ class KernelHerding:
         plt.close()
         return fig, plot_data
 
+    def get_indices(self, sample):
+        """
+        When provided a subsample of the candidate set, returns the indices of its points in the candidate set.
+
+        Parameters
+        ----------
+        sample : 2-d list of float
+            A subsample of the candidate set.
+
+        Returns
+        -------
+        indices : list of int
+            Indices of the points of the sample within the candidate set.
+        """
+        sample = np.array(sample)
+        if len(sample.shape) != 2:
+            raise ValueError("Not a sample: shape is {} instead of 2.".format(len(sample.shape)))
+        candidate_array = np.array(self._candidate_set) # convert to numpy array so np.where works
+        indices = []
+        for sample_index, pt in enumerate(sample):
+            index = np.where((candidate_array==pt).prod(axis=1))[0]
+            if len(index) != 1:
+                raise ValueError("The point {}, with index {} in the sample, is not in the candidate set.".format(pt, sample_index))
+            indices.extend(index)
+        return indices
