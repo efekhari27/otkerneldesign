@@ -41,7 +41,17 @@ Examples
 
 References
 ----------
-- TODO
+- Chen, Y., M. Welling, & A. Smola (2010). Super-samples from kernel herding. In Proceedings of the Twenty-Sixth
+  Conference on Uncertainty in Artificial Intelligence, pp. 109 – 116.
+- Mak, S. & V. R. Joseph (2018). Support points. The Annals of Statistics 46, 2562 – 2592.
+- Fekhari, E., B. Iooss, J. Mure, L. Pronzato, & M. Rendas (2022). Model predictivity assessment: incremental
+  test-set selection and accuracy evaluation. preprint.
+- Briol, F.-X., C. Oates, M. Girolami, M. Osborne, & D. Sejdinovic (2019). Probabilistic Integration: A Role in
+  Statistical Computation? Statistical Science 34, 1 – 22.
+- Huszár, F. & D. Duvenaud (2012). Optimally-Weighted Herding is Bayesian Quadrature. In Proceedings of the
+  Twenty-Eighth Conference on Uncertainty in Artificial Intelligence, pp. 377 – 386.
+- Teymur, O., J. Gorham, M. Riabiz, & C. Oates (2021). Optimal quantisation of probability measures using 
+  maximum mean discrepancy. In International Conference on Artificial Intelligence and Statistics, pp. 1027 – 1035.
 
 .. image:: _static/kernel_herding.png
      :align: center
