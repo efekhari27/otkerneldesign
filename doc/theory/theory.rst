@@ -18,7 +18,7 @@ Sampling methods based on the notion of discrepancy between distributions in a k
 functional space were used to approximate integrals. More precisely, one can mention the use 
 of the distance called the *maximum mean discrepancy* (MMD) as a core ingredient of advanced sampling 
 methods such as the *Support points* by (Mak & Joseph, 2018) and the *Kernel herding* by (Chen & al., 2010). 
-The MMD is convenient to manipulate since it can simply be expressed using the underlying kernel arbitrarily arbitrary chosen. 
+Manipulating the MMD is convenient since its expression is simple ; it depends on an arbitrarily chosen kernel.  
 Let us setup the introduction of the Kernel herding and Support points methods by briefly defining a few mathematical concepts. 
 
 **Reproducing kernel Hilbert space.**
@@ -27,10 +27,10 @@ Assuming that :math:`k` is a symmetric and positive definite function :math:`k: 
 latter called a "reproducing kernel" or simply a "kernel". A *reproducing kernel Hilbert space* (RKHS) is an inner product 
 space :math:`\cH(k)` of functions :math:`g:\cD_\vect{X} \rightarrow \Rset` with the following properties:
 
-* :math:`\langle g, k(\cdot, \vect{x}) \rangle_{\cH(k)} = g(\vect{x}), \quad \forall \vect{x} \in \cD_\vect{X}, \forall g \in \cH(k)`
 * :math:`k(\cdot, \vect{x}) \in \cH(k), \quad \forall \vect{x} \in \cD_\vect{X}.`
+* :math:`\langle g, k(\cdot, \vect{x}) \rangle_{\cH(k)} = g(\vect{x}), \quad \forall \vect{x} \in \cD_\vect{X}, \forall g \in \cH(k)`
 
-Notice that for a defined reproducing kernel, a unique RKHS exists and vice versa.
+Notice that for a defined reproducing kernel, a unique RKHS exists and vice versa (see `C.Oates, 2021 <https://arxiv.org/pdf/2109.06075.pdf>`_ ).
 
 **Potential.**
 
@@ -41,13 +41,15 @@ For any target distribution :math:`\mu`, its *potential* (also called "kernel me
     
     P_{\mu}(\vect{x}) := \int_{\cD_\vect{X}} k(\vect{x}, \vect{x}') \di \mu(\vect{x}').
 
-Let us also define the potential of a discrete distribution :math:`\zeta_n = \sum_{i=1}^{n} w_i \delta(\vect{x}^{(i)}), w_i \in \Rset` 
-(weighted sum of Dirac distributions at the design points :math:`\vect{X}_n`) associated with the kernel :math:`k` as:
+Then, the potential of a discrete distribution :math:`\zeta_n = \frac1n \sum_{i=1}^{n} \delta(\vect{x}^{(i)})` 
+(uniform mixture of Dirac distributions at the design points :math:`\vect{X}_n`) associated with the kernel :math:`k` can be expressed as:
 
 .. math::
     :name: design_potential
     
-    P_{\zeta_n}(\vect{x}) = \sum_{i=1}^{n} w_i k(\vect{x}, \vect{x}^{(i)}).
+    P_{\zeta_n}(\vect{x}) = \frac1n \sum_{i=1}^{n} k(\vect{x}, \vect{x}^{(i)}).
+
+Close potentials can be interpreted to mean that the design $\bX_n$ adequately quantizes $\mu$
 
 **Maximum mean discrepancy.**
 
