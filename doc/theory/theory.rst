@@ -39,7 +39,7 @@ For any target distribution :math:`\mu`, its *potential* (also called "kernel me
 .. math::
     :name: potential
     
-    P_{\mu}(\vect{x}) := \int_{\cD_\vect{X}} k(\vect{X}, \vect{X}') \di \mu(\vect{X}').
+    P_{\mu}(\vect{x}) := \int_{\cD_\vect{X}} k(\vect{x}, \vect{x}') \di \mu(\vect{x}').
 
 Let us also define the potential of a discrete distribution :math:`\zeta_n = \sum_{i=1}^{n} w_i \delta(\vect{x}^{(i)}), w_i \in \Rset` 
 (weighted sum of Dirac distributions at the design points :math:`\vect{X}_n`) associated with the kernel :math:`k` as:

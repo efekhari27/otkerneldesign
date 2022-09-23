@@ -33,6 +33,10 @@ class KernelHerding:
         If not specified, then *distribution* and *candidate_set_size* must be in order to generate it automatically.
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
+    is_greedy : Boolean 
+        Set to False by default, then the criterion is the difference between the current and target potential. 
+        When set to True, the MMD minimization is strictly greedy. In practice, the two criteria are very close, 
+        only for the greedy one the current potential is multiplied by :math:`(\\frac{m}{m+1})`.
 
     Examples
     --------
@@ -55,6 +59,7 @@ class KernelHerding:
         candidate_set_size=None,
         candidate_set=None,
         initial_design=None,
+        is_greedy=False,
     ):
         self._method_label = "kernel herding"
         # Inconsistency
@@ -127,6 +132,7 @@ class KernelHerding:
             self._covmatrix = np.zeros((0, self._candidate_set.getSize()))
         self._target_potential = self.compute_target_potential()
         self._target_energy = self.compute_target_energy()
+        self.is_greedy = is_greedy
 
     def _set_kernel(self, kernel):
         if kernel.getInputDimension() == self._dimension:
@@ -324,7 +330,11 @@ class KernelHerding:
                                                 Vector of the values taken by the criterion on all candidate points
         """
         current_potential = self.compute_current_potential(design_indices)
-        return current_potential - self._target_potential
+        m = len(design_indices)
+        if self.is_greedy:
+            return (m / (m + 1)) * current_potential - self._target_potential
+        else:
+            return current_potential - self._target_potential
 
     def select_design(self, size, initial_design_indices=[]):
         """
@@ -349,8 +359,7 @@ class KernelHerding:
         """
         design_indices = deepcopy(self._design_indices)
         for _ in range(size):
-            current_potential = self.compute_current_potential(design_indices)
-            criteria = current_potential - self._target_potential
+            criteria = self.compute_criterion(design_indices)
             next_index = np.argmin(criteria)
             design_indices.append(next_index)
         design = self._candidate_set[design_indices[self._initial_size:]]
