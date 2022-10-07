@@ -242,7 +242,7 @@ class GreedySupportPoints:
                     Energy of the discrete measure defined by the design
         """
         current_potential = self.compute_current_potential(design_indices)
-        current_energy = current_potential.mean()
+        current_energy = current_potential[design_indices].mean()
         return current_energy
 
     def select_design(self, size):

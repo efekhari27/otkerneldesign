@@ -301,8 +301,29 @@ class KernelHerdingTensorized:
                     Energy of the discrete measure defined by the design
         """
         current_potential = self.compute_current_potential(design_indices)
-        current_energy = np.mean(current_potential)
+        current_energy = np.mean(current_potential[design_indices])
         return current_energy
+
+    def compute_mmd(self, design_indices):
+        """
+        Compute Maximum Mean Discrepancy between :math:`\\mu` and :math:`\\zeta_n = \\frac{1}{n} \\sum_{i=1}^{n} \\delta(\\vect{x}^{(i)})`.
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        mmd : float
+                Maximum Mean Discrepancy between target and current measure.
+        """
+        current_energy = self.compute_current_energy(design_indices)
+        current_design = self._candidate_set[design_indices]
+        cross_potential = np.array(self._kernel.computeCrossCovariance(current_design, self._candidate_set)).mean()
+        mmd = current_energy + self._target_energy - 2 * cross_potential
+        return mmd
 
     def compute_criterion(self, design_indices):
         """
@@ -427,6 +448,36 @@ class KernelHerdingTensorized:
         ax.set_title('Energy convergence')
         ax.set_xlabel('design size ($n$)')
         ax.set_ylabel('Energy')
+        ax.legend(loc='best')
+        plt.close()
+        return fig, plot_data
+
+    def draw_mmd_convergence(self, design_indices):
+        """
+        Draws the convergence of the MMD between a discrete measure and the target measure.
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        fig : matplotlib.Figure
+                    MMD convergence of the design of experiments
+        
+        plot_data : data used to plot the figure
+        """
+        mmds = []
+        sizes = range(1, len(design_indices))
+        for i in sizes:
+            mmds.append(self.compute_mmd(design_indices[:i]))
+        fig, ax = plt.subplots(1, figsize=(9, 6))
+        plot_data, = ax.plot(sizes, mmds, label=self._method_label)
+        ax.set_title('MMD convergence')
+        ax.set_xlabel('design size ($n$)')
+        ax.set_ylabel('MMD')
         ax.legend(loc='best')
         plt.close()
         return fig, plot_data
