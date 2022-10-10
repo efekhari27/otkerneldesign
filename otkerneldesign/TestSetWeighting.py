@@ -60,8 +60,7 @@ class TestSetWeighting:
 
         # Kernel
         if kernel is None:
-            supposed_size = 50
-            scale = supposed_size ** (-1 / self._dimension)
+            scale = self._test.getSize() ** (-1 / self._dimension)
             ker_list = [ot.MaternModel([scale], 2.5)] * self._dimension
             self._kernel = ot.ProductCovarianceModel(ker_list)
         else:

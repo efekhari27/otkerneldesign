@@ -90,9 +90,8 @@ class GreedySupportPoints:
             self._initial_size = 0
             self._design_indices = []
         else:
-            self._candidate_set = np.vstack(
-                [candidate_set, np.array(initial_design)]
-            )  # candidate_points
+            initial_design = np.array(initial_design)
+            self._candidate_set = np.vstack([self._candidate_set, initial_design])  # candidate_points
             self._initial_size = initial_design.shape[0]
             self._design_indices = list(
                 range(candidate_set_size, candidate_set_size + self._initial_size)

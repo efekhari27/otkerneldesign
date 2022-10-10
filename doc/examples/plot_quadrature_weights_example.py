@@ -1,6 +1,6 @@
 """
-Bayesian quadrature weighting examples
-======================================
+Bayesian quadrature weighting example
+=====================================
 
 The aim of this page is to provide a simple example to 
 compute optimal-weights for quadrature on any given sample.
