@@ -40,6 +40,10 @@ class KernelHerdingTensorized:
         If not specified, then *distribution* and *candidate_set_size* must be in order to generate it automatically.
     initial_design : 2-d list of float
         Sample of points that must be included in the design. Empty by default.
+    is_greedy : Boolean 
+        Set to False by default, then the criterion is the difference between the current and target potential. 
+        When set to True, the MMD minimization is strictly greedy. In practice, the two criteria are very close, 
+        only for the greedy one the current potential is multiplied by :math:`(\\frac{m}{m+1})`.
 
     Examples
     --------
@@ -62,6 +66,7 @@ class KernelHerdingTensorized:
         candidate_set_size=None,
         candidate_set=None,
         initial_design=None,
+        is_greedy=False,
     ):
         self._method_label = "kernel herding tensorized"
         # Inconsistency
@@ -135,6 +140,7 @@ class KernelHerdingTensorized:
             self._covmatrix = np.array(self._kernel.discretize(self._candidate_set))
         self._target_potential = self.compute_target_potential()
         self._target_energy = self.compute_target_energy()
+        self.is_greedy = is_greedy
 
     def _set_kernel(self, kernel):
         if kernel.getInputDimension() == self._dimension:
@@ -295,8 +301,29 @@ class KernelHerdingTensorized:
                     Energy of the discrete measure defined by the design
         """
         current_potential = self.compute_current_potential(design_indices)
-        current_energy = np.mean(current_potential)
+        current_energy = np.mean(current_potential[design_indices])
         return current_energy
+
+    def compute_mmd(self, design_indices):
+        """
+        Compute Maximum Mean Discrepancy between :math:`\\mu` and :math:`\\zeta_n = \\frac{1}{n} \\sum_{i=1}^{n} \\delta(\\vect{x}^{(i)})`.
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        mmd : float
+                Maximum Mean Discrepancy between target and current measure.
+        """
+        current_energy = self.compute_current_energy(design_indices)
+        current_design = self._candidate_set[design_indices]
+        cross_potential = np.array(self._kernel.computeCrossCovariance(current_design, self._candidate_set)).mean()
+        mmd = current_energy + self._target_energy - 2 * cross_potential
+        return mmd
 
     def compute_criterion(self, design_indices):
         """
@@ -317,7 +344,11 @@ class KernelHerdingTensorized:
 
         """
         current_potential = self.compute_current_potential(design_indices)
-        return current_potential - self._target_potential
+        m = len(design_indices)
+        if self.is_greedy:
+            return (m / (m + 1)) * current_potential - self._target_potential
+        else:
+            return current_potential - self._target_potential
 
     def select_design(self, size):
         """
@@ -342,8 +373,7 @@ class KernelHerdingTensorized:
         """
         design_indices = deepcopy(self._design_indices)
         for _ in range(size):
-            current_potential = self.compute_current_potential(design_indices)
-            criteria = current_potential - self._target_potential
+            criteria = self.compute_criterion(design_indices)
             next_index = np.argmin(criteria)
             design_indices.append(next_index)
         design = self._candidate_set[design_indices[self._initial_size:]]
@@ -418,6 +448,36 @@ class KernelHerdingTensorized:
         ax.set_title('Energy convergence')
         ax.set_xlabel('design size ($n$)')
         ax.set_ylabel('Energy')
+        ax.legend(loc='best')
+        plt.close()
+        return fig, plot_data
+
+    def draw_mmd_convergence(self, design_indices):
+        """
+        Draws the convergence of the MMD between a discrete measure and the target measure.
+
+        Parameters
+        ----------
+        design_indices : list of positive int
+                         List of the indices of the selected points
+                         in the Sample of candidate points
+
+        Returns
+        -------
+        fig : matplotlib.Figure
+                    MMD convergence of the design of experiments
+        
+        plot_data : data used to plot the figure
+        """
+        mmds = []
+        sizes = range(1, len(design_indices))
+        for i in sizes:
+            mmds.append(self.compute_mmd(design_indices[:i]))
+        fig, ax = plt.subplots(1, figsize=(9, 6))
+        plot_data, = ax.plot(sizes, mmds, label=self._method_label)
+        ax.set_title('MMD convergence')
+        ax.set_xlabel('design size ($n$)')
+        ax.set_ylabel('MMD')
         ax.legend(loc='best')
         plt.close()
         return fig, plot_data

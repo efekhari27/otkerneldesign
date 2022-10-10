@@ -22,8 +22,6 @@ class TestSetWeighting:
         Training set used for validating a machine learning model.
     distribution_sample : 2-d list of float
         Large sample that empirically represents a distribution.
-        If not specified, then *distribution* and *candidate_set_size* 
-        must be in order to generate it automatically.
     kernel : :class:`openturns.CovarianceModel`
         Covariance kernel used to define potentials.
         By default a product of Matern kernels with smoothness 5/2.
@@ -62,8 +60,7 @@ class TestSetWeighting:
 
         # Kernel
         if kernel is None:
-            supposed_size = 50
-            scale = supposed_size ** (-1 / self._dimension)
+            scale = self._test.getSize() ** (-1 / self._dimension)
             ker_list = [ot.MaternModel([scale], 2.5)] * self._dimension
             self._kernel = ot.ProductCovarianceModel(ker_list)
         else:

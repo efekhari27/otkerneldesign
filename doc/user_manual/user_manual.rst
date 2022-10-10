@@ -12,7 +12,9 @@ Index of classes
 	   
 	   KernelHerdingTensorized
 
-	   TestSetWeighting
-
 	   GreedySupportPoints
+
+	   TestSetWeighting
+       
+       BayesianQuadratureWeighting
 	
