@@ -30,7 +30,7 @@ space :math:`\cH(k)` of functions :math:`g:\cD_\vect{X} \rightarrow \Rset` with 
 * :math:`k(\cdot, \vect{x}) \in \cH(k), \quad \forall \vect{x} \in \cD_\vect{X}.`
 * :math:`\langle g, k(\cdot, \vect{x}) \rangle_{\cH(k)} = g(\vect{x}), \quad \forall \vect{x} \in \cD_\vect{X}, \forall g \in \cH(k)`
 
-Notice that for a defined reproducing kernel, a unique RKHS exists and vice versa (see `C.Oates, 2021 <https://arxiv.org/pdf/2109.06075.pdf>`_ ).
+Note that for a defined reproducing kernel, a unique RKHS exists and vice versa (see `C.Oates, 2021 <https://arxiv.org/pdf/2109.06075.pdf>`_ ).
 
 **Potential.**
 
@@ -49,13 +49,13 @@ Then, the potential of a discrete distribution :math:`\zeta_n = \frac1n \sum_{i=
     
     P_{\zeta_n}(\vect{x}) = \frac1n \sum_{i=1}^{n} k(\vect{x}, \vect{x}^{(i)}).
 
-Close potentials can be interpreted to mean that the design $\bX_n$ adequately quantizes $\mu$
+Close potentials can be interpreted to mean that the design :math:`\vect{X}_n` adequately quantizes :math:`\mu`
 
 **Maximum mean discrepancy.**
 
-A recent metric of discrepancy and quadrature error is offered by the MMD. 
+A metric of discrepancy and quadrature error is offered by the MMD. 
 This distance between two distributions :math:`\mu` and :math:`\zeta` is given by the 
-maximal quadrature error committed for any function within a defined RKHS:
+maximal quadrature error committed for any function within the unit ball of an RKHS:
 
 .. math::
     :name: mmd
@@ -67,7 +67,7 @@ maximal quadrature error committed for any function within a defined RKHS:
 Using the Cauchy-Schwartz inequality, one can demonstrate that 
 :math:`\mathrm{MMD}_k(\mu, \zeta) = \left\lVert P_{\mu}(\vect{x}) - P_{\zeta}(\vect{x}) \right\lVert_{\cH(k)}` 
 (see `C.Oates, 2021 <https://arxiv.org/pdf/2109.06075.pdf>`_ ). 
-Moreover, kernels are called characteristic when the following implication is true , :math:`\mathrm{MMD}_k(\mu, \zeta) = 0 \Rightarrow \mu = \zeta`.
+Moreover, a kernel :math:`k` is called characteristic if :math:`\mathrm{MMD}_k(\mu, \zeta) = 0` is equivalent to :math:`\mu = \zeta`.
 
 Kernel herding
 --------------
@@ -101,7 +101,7 @@ which can be injected in :ref:`(4) <kh_criterion>` to solve the following optimi
 
 When no observation is available, which is the common situation at the design stage, 
 the kernel hyperparameters (e.g., correlation lengths) have to be set to heuristic values. 
-MMD minimization is quite versatile and was explored in more details by (Teymur & al., 2021)
+MMD minimization is quite versatile and was explored in details by (Teymur & al., 2021)
 or (Pronzato & Zhigljavsky, 2020), however the method is very sensitive to the kernel chosen and its tuning. 
 Support points is a closely related method with a more rigid mathematical structure but interesting performances.
 
@@ -138,16 +138,16 @@ a validation set for machine learning models by conveniently selecting a test se
 References
 ----------
 - Chen, Y., M. Welling, & A. Smola (2010). Super-samples from kernel herding. In Proceedings of the Twenty-Sixth
-  Conference on Uncertainty in Artificial Intelligence, pp. 109 – 116.
-- Mak, S. & V. R. Joseph (2018). Support points. The Annals of Statistics 46, 2562 – 2592.
+  Conference on Uncertainty in Artificial Intelligence, pp. 109 – 116. `PDF <https://arxiv.org/pdf/1203.3472.pdf>`_
+- Mak, S. & V. R. Joseph (2018). Support points. The Annals of Statistics 46, 2562 – 2592. `PDF <https://projecteuclid.org/journals/annals-of-statistics/volume-46/issue-6A/Support-points/10.1214/17-AOS1629.full>`_
 - Fekhari, E., B. Iooss, J. Mure, L. Pronzato, & M. Rendas (2022). Model predictivity assessment: incremental
-  test-set selection and accuracy evaluation. preprint.
+  test-set selection and accuracy evaluation. preprint. `PDF <https://hal.archives-ouvertes.fr/hal-03523695/document>`_
 - Briol, F.-X., C. Oates, M. Girolami, M. Osborne, & D. Sejdinovic (2019). Probabilistic Integration: A Role in
-  Statistical Computation? Statistical Science 34, 1 – 22.
+  Statistical Computation? Statistical Science 34, 1 – 22. `PDF <https://projecteuclid.org/journals/statistical-science/volume-34/issue-1/Rejoinder-Probabilistic-Integration-A-Role-in-Statistical-Computation/10.1214/18-STS683.full>`_
 - Pronzato, L. & A. Zhigljavsky (2020). Bayesian quadrature and energy minimization for space-filling design.
-  SIAM/ASA Journal on Uncertainty Quantification 8, 959 – 1011
+  SIAM/ASA Journal on Uncertainty Quantification 8, 959 – 1011 `PDF <https://hal.archives-ouvertes.fr/hal-01864076v3/document>`_
 - Huszár, F. & D. Duvenaud (2012). Optimally-Weighted Herding is Bayesian Quadrature. In Proceedings of the
-  Twenty-Eighth Conference on Uncertainty in Artificial Intelligence, pp. 377 – 386.
+  Twenty-Eighth Conference on Uncertainty in Artificial Intelligence, pp. 377 – 386. `PDF <https://arxiv.org/pdf/1204.1664.pdf>`_
 - Teymur, O., J. Gorham, M. Riabiz, & C. Oates (2021). Optimal quantisation of probability measures using 
-  maximum mean discrepancy. In International Conference on Artificial Intelligence and Statistics, pp. 1027 – 1035.
+  maximum mean discrepancy. In International Conference on Artificial Intelligence and Statistics, pp. 1027 – 1035. `PDF <http://proceedings.mlr.press/v130/teymur21a/teymur21a.pdf>`_
 

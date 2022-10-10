@@ -22,7 +22,7 @@ distribution = ot.ComposedDistribution([unifrom] * dimension)
 # Standard and tensorized kernel herding 
 # --------------------------------------
 
-size = 400
+size = 300
 # Kernel definition
 theta = 0.3
 ker_list = [ot.MaternModel([theta], [1.0], 2.5)] * dimension
@@ -70,13 +70,13 @@ fig2, plot_data2 = kht.draw_energy_convergence(kht.get_indices(kht_design))
 
 fig3, ax3 = plt.subplots(1, sharey=True, sharex=True)
 # Plot data from fig1 and fig2
-ax3.plot(plot_data1.get_data()[0], plot_data1.get_data()[1], label=kh._method_label + 'standard')
-ax3.plot(plot_data2.get_data()[0], plot_data2.get_data()[1], label=kht._method_label)
-ax3.axhline(kh_target_energy, color='C0', linestyle='dashed', label='target energy standard')
-ax3.axhline(kht_target_energy, color='C1', linestyle='dashed', label='target energy tensorized')
+ax3.plot(plot_data1.get_data()[0], np.log(plot_data1.get_data()[1]), label=kh._method_label + 'standard')
+ax3.plot(plot_data2.get_data()[0], np.log(plot_data2.get_data()[1]), label=kht._method_label)
+ax3.axhline(np.log(kh_target_energy), color='C0', linestyle='dashed', label='target energy standard')
+ax3.axhline(np.log(kht_target_energy), color='C1', linestyle='dashed', label='target energy tensorized')
 ax3.set_title('Energy convergence')
 ax3.set_xlabel('design size ($n$)')
-ax3.set_ylabel('Energy')
+ax3.set_ylabel('Energy (log-scale)')
 ax3.legend(loc='best')
 plt.show()
 
