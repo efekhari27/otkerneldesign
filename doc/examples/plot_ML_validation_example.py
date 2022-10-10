@@ -132,3 +132,18 @@ tsw = otkd.TestSetWeighting(x_learn, x_test, sp._candidate_set)
 optimal_test_weights = tsw.compute_weights()
 weighted_Q2 = 1 - np.mean(np.array(y_test).flatten() * optimal_test_weights) / y_test.computeVariance()[0]
 print("Weighted support points (n={}) predictivity coefficient: {:.3}".format(test_size, weighted_Q2))
+
+# %%
+# Adding test set to learning set
+# -------------------------------
+# The test set can now be added to the learning set to enhance the Kriging model
+x_learn.add(x_test)
+y_learn.add(y_test)
+algo_enhanced = ot.KrigingAlgorithm(x_learn, y_learn, covariance_model, basis)
+algo_enhanced.run()
+result_enhanced = algo_enhanced.getResult()
+kriging_enhanced = result_enhanced.getMetaModel()
+
+ref_val_enhanced = ot.MetaModelValidation(xref_test, yref_test, kriging_enhanced)
+ref_Q2_enhanced = ref_val_enhanced.computePredictivityFactor()[0]
+print("Enhanced Kriging - Monte Carlo (n=10000) predictivity coefficient: {:.3}".format(ref_Q2_enhanced))
