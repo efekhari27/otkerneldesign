@@ -65,8 +65,9 @@ plt.show()
 distribution = ot.ComposedDistribution([ot.Uniform(0, 1)] * 2)
 
 # %%
-# Build a learning set, for example by optimized Latin Hypercube Sampling.
+# Build a learning set, for example by Latin Hypercube Sampling.
 learning_size = 20
+ot.RandomGenerator.SetSeed(0)
 LHS_experiment = ot.LHSExperiment(distribution, learning_size, True, True)
 x_learn = LHS_experiment.generate()
 y_learn = irregular_function(x_learn)
@@ -107,7 +108,6 @@ kriging_model = result.getMetaModel()
 # %%
 # Build a large Monte Carlo reference test set and 
 # compute a reference performance metric on it.
-ot.RandomGenerator.SetSeed(1)
 xref_test = distribution.getSample(10000)
 yref_test = irregular_function(xref_test)
 ref_val = ot.MetaModelValidation(xref_test, yref_test, kriging_model)
