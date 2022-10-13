@@ -65,8 +65,9 @@ plt.show()
 distribution = ot.ComposedDistribution([ot.Uniform(0, 1)] * 2)
 
 # %%
-# Build a learning set, for example by optimized Latin Hypercube Sampling.
+# Build a learning set, for example by Latin Hypercube Sampling.
 learning_size = 20
+ot.RandomGenerator.SetSeed(0)
 LHS_experiment = ot.LHSExperiment(distribution, learning_size, True, True)
 x_learn = LHS_experiment.generate()
 y_learn = irregular_function(x_learn)
@@ -92,13 +93,13 @@ lgd = plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center')
 plt.tight_layout(pad=1)
 plt.show()
 
-
 # %%
 # Kriging model fit and validation
 # --------------------------------
 # Build a simple Kriging regression model.
-basis = ot.ConstantBasisFactory(distribution.getDimension()).build()
-covariance_model = ot.MaternModel([0.2], 2.5)
+dim = distribution.getDimension()
+basis = ot.ConstantBasisFactory(dim).build()
+covariance_model = ot.MaternModel([0.2] * dim, 2.5)
 algo = ot.KrigingAlgorithm(x_learn, y_learn, covariance_model, basis)
 algo.run()
 result = algo.getResult()
@@ -107,7 +108,6 @@ kriging_model = result.getMetaModel()
 # %%
 # Build a large Monte Carlo reference test set and 
 # compute a reference performance metric on it.
-ot.RandomGenerator.SetSeed(1)
 xref_test = distribution.getSample(10000)
 yref_test = irregular_function(xref_test)
 ref_val = ot.MetaModelValidation(xref_test, yref_test, kriging_model)
