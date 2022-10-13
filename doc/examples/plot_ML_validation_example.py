@@ -93,13 +93,13 @@ lgd = plt.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center')
 plt.tight_layout(pad=1)
 plt.show()
 
-
 # %%
 # Kriging model fit and validation
 # --------------------------------
 # Build a simple Kriging regression model.
-basis = ot.ConstantBasisFactory(distribution.getDimension()).build()
-covariance_model = ot.MaternModel([0.2], 2.5)
+dim = distribution.getDimension()
+basis = ot.ConstantBasisFactory(dim).build()
+covariance_model = ot.MaternModel([0.2] * dim, 2.5)
 algo = ot.KrigingAlgorithm(x_learn, y_learn, covariance_model, basis)
 algo.run()
 result = algo.getResult()
