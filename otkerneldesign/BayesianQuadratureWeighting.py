@@ -109,6 +109,17 @@ class BayesianQuadratureWeighting:
                 )
             )
 
+    def compute_current_covmatrix_and_potentials(self, input_sample):
+        size = input_sample.getSize()
+        global_sample = ot.Sample(input_sample)
+        global_sample.add(self._distribution_sample)
+        cov_rows = np.zeros((size, global_sample.getSize()))
+        for idx in range(size):
+            cov_rows[idx, :] = self._kernel.discretizeRow(global_sample, int(idx)).asPoint()
+        covmatrix = cov_rows[:, :size] + np.identity(size) * 1e-4
+        potentials = cov_rows[:, size:].mean(axis=1)
+        return covmatrix, potentials
+
     def compute_bayesian_quadrature_weights(self, input_sample):
         """
         Compute optimal weights for probabilistic integration using a given sample.
@@ -117,20 +128,44 @@ class BayesianQuadratureWeighting:
         ----------
             input_sample : :class:`openturns.Sample`
                     Sample of points to be optimally weighted.
-        """
-        # TODO: 
-        # Test dimension consistency with init objects 
-        size = input_sample.getSize()
-        global_sample = ot.Sample(input_sample)
-        global_sample.add(self._distribution_sample)
-        cov_rows = np.zeros((size, global_sample.getSize()))
-        for idx in range(size):
-            cov_rows[idx, :] = self._kernel.discretizeRow(global_sample, int(idx)).asPoint()
-        covmatrix = cov_rows[:, :size] + np.identity(size) * 1e-4
-        # TODO: 
-        # - add a test on the conditioning using np.cond(covmatrix)
-        # - try inversion using Pytorch 
-        potentials = cov_rows[:, size:].mean(axis=1)
+        """     
+        covmatrix, potentials = self.compute_current_covmatrix_and_potentials(input_sample)
         return np.linalg.solve(covmatrix.T, potentials.T).T
 
+    def compute_bayesian_quadrature_mean(self, input_sample, output_sample, trend='zero'):
+        bq_weights = self.compute_bayesian_quadrature_weights(input_sample)
+        output_sample = np.array(output_sample).flatten()
+        if trend=='zero':
+            return output_sample @ bq_weights
+        elif trend=='constant':
+            mean = np.mean(output_sample)
+            return mean + (output_sample - mean) @ bq_weights
+        else:
+            raise ValueError
 
+    def compute_bayesian_quadrature_variance(self, input_sample, trend='zero'):
+        _, potentials = self.compute_current_covmatrix_and_potentials(input_sample)
+        bq_weights = self.compute_bayesian_quadrature_weights(input_sample)
+        target_energy = np.array(self._kernel.discretize(self._distribution_sample)).mean()
+        if trend=='zero':
+            return target_energy - bq_weights @ potentials
+        #elif trend=='constant':
+            # reconstruct the inverse covmatrix from weights
+        else:
+            raise ValueError
+
+        # TODO:
+        # Add simple example in docstring
+        # Add a test on the conditioning using np.cond(covmatrix)
+        # Try inversion using Pytorch 
+
+
+if __name__=="__main__":
+    theta = 0.7
+    #kernel = ot.MaternModel([theta], [1.0], 2.5)
+    dist = ot.Normal()
+    x_train = dist.getSample(10)
+    kernel = ot.SquaredExponential([theta], [1.0])
+    bq = BayesianQuadratureWeighting(kernel=kernel, distribution=ot.Normal())
+    BQ_weights = bq.compute_bayesian_quadrature_weights(x_train)
+    BQ_variance = bq.compute_bayesian_quadrature_variance(x_train)

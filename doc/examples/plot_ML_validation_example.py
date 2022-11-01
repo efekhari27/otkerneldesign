@@ -67,7 +67,7 @@ distribution = ot.ComposedDistribution([ot.Uniform(0, 1)] * 2)
 # %%
 # Build a learning set, for example by Latin Hypercube Sampling.
 learning_size = 20
-ot.RandomGenerator.SetSeed(0)
+ot.RandomGenerator.SetSeed(1)
 LHS_experiment = ot.LHSExperiment(distribution, learning_size, True, True)
 x_learn = LHS_experiment.generate()
 y_learn = irregular_function(x_learn)
