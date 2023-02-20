@@ -7,9 +7,10 @@ Copyright (C) EDF 2022
 """
 import openturns as ot
 import numpy as np
+import torch
 
 
-class BayesianQuadratureWeighting:
+class BayesianQuadrature:
     """
     Optimally-weighting a sample for probabilistic integration.
 
@@ -37,7 +38,7 @@ class BayesianQuadratureWeighting:
     >>> mc_sample = distribution.getSample(20)
     >>> ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * 2
     >>> kernel = ot.ProductCovarianceModel(ker_list)
-    >>> qw = otkd.BayesianQuadratureWeighting(
+    >>> qw = otkd.BayesianQuadrature(
     >>>     kernel=kernel,
     >>>     distribution=distribution
     >>> )
@@ -130,7 +131,7 @@ class BayesianQuadratureWeighting:
                     Sample of points to be optimally weighted.
         """     
         covmatrix, potentials = self.compute_current_covmatrix_and_potentials(input_sample)
-        return np.linalg.solve(covmatrix.T, potentials.T).T
+        return np.array(torch.linalg.solve(torch.tensor(covmatrix.T), torch.tensor(potentials.T))).T
 
     def compute_bayesian_quadrature_mean(self, input_sample, output_sample, trend='zero'):
         bq_weights = self.compute_bayesian_quadrature_weights(input_sample)
@@ -144,20 +145,26 @@ class BayesianQuadratureWeighting:
             raise ValueError
 
     def compute_bayesian_quadrature_variance(self, input_sample, trend='zero'):
-        _, potentials = self.compute_current_covmatrix_and_potentials(input_sample)
+        covmatrix, potentials = self.compute_current_covmatrix_and_potentials(input_sample)
         bq_weights = self.compute_bayesian_quadrature_weights(input_sample)
         target_energy = np.array(self._kernel.discretize(self._distribution_sample)).mean()
         if trend=='zero':
             return target_energy - bq_weights @ potentials
-        #elif trend=='constant':
-            # reconstruct the inverse covmatrix from weights
+        elif trend=='constant':
+            Kinv = np.array(torch.linalg.inv(torch.tensor(covmatrix)))
+            return target_energy - bq_weights @ potentials + (1 - np.sum(bq_weights)) ** 2 / np.sum(Kinv)
         else:
             raise ValueError
+    
+    def compute_bayesian_quadrature_distribution(self, input_sample, output_sample, trend='zero'):
+        mean = self.compute_bayesian_quadrature_mean(input_sample, output_sample, trend)
+        sigma = np.sqrt(self.compute_bayesian_quadrature_variance(input_sample, trend))
+        return ot.Normal(mean, sigma)
 
         # TODO:
+        # Two options : either basis null either any ot basis. Test the basis dimensions, if zero or None then null. 
         # Add simple example in docstring
         # Add a test on the conditioning using np.cond(covmatrix)
-        # Try inversion using Pytorch 
 
 
 if __name__=="__main__":
@@ -166,6 +173,6 @@ if __name__=="__main__":
     dist = ot.Normal()
     x_train = dist.getSample(10)
     kernel = ot.SquaredExponential([theta], [1.0])
-    bq = BayesianQuadratureWeighting(kernel=kernel, distribution=ot.Normal())
+    bq = BayesianQuadrature(kernel=kernel, distribution=ot.Normal())
     BQ_weights = bq.compute_bayesian_quadrature_weights(x_train)
     BQ_variance = bq.compute_bayesian_quadrature_variance(x_train)

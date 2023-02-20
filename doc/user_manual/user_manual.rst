@@ -16,5 +16,5 @@ Index of classes
 
 	   TestSetWeighting
        
-       BayesianQuadratureWeighting
+       BayesianQuadrature
 	

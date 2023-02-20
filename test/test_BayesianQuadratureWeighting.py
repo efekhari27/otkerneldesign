@@ -8,8 +8,8 @@ import openturns as ot
 import openturns.testing as ott
 
 
-class CheckBayesianQuadratureWeighting(unittest.TestCase):
-    def test_BayesianQuadratureWeighting(self):
+class CheckBayesianQuadrature(unittest.TestCase):
+    def test_BayesianQuadrature(self):
         size = 20
         dimension = 2
         distribution = ot.ComposedDistribution([ot.Uniform(0.0, 1.0)] * dimension)
@@ -19,7 +19,7 @@ class CheckBayesianQuadratureWeighting(unittest.TestCase):
         ker_list = [ot.MaternModel([0.1], [1.0], 2.5)] * dimension
         kernel = ot.ProductCovarianceModel(ker_list)
 
-        qw = otkd.BayesianQuadratureWeighting(
+        qw = otkd.BayesianQuadrature(
             kernel=kernel,
             distribution_sample_size=2 ** 12,
             distribution=distribution

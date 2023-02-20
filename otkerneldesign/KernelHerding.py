@@ -328,9 +328,23 @@ class KernelHerding:
                 Maximum Mean Discrepancy between target and current measure.
         """
         current_energy = self.compute_current_energy(design_indices)
-        current_design = self._candidate_set[design_indices]
-        cross_potential = np.array(self._kernel.computeCrossCovariance(current_design, self._candidate_set)).mean()
-        mmd = current_energy + self._target_energy - 2 * cross_potential
+        #current_design = self._candidate_set[design_indices]
+        #cross_energy = np.array(self._kernel.computeCrossCovariance(current_design, self._candidate_set)).mean()
+        cross_energy = np.mean(self._extract_from_covmatrix(design_indices))
+        mmd = current_energy + self._target_energy - 2 * cross_energy
+        return mmd
+
+    def _compute_weighted_mmd(self, design_indices, weights):
+        if len(design_indices) == 0:
+            return np.zeros(self._candidate_set.getSize())
+        covmatrix_design_indices_rows = self._extract_from_covmatrix(design_indices)
+        # Weighted cross energy 
+        cross_potential = covmatrix_design_indices_rows.mean(axis=1)
+        weighted_cross_energy = np.dot(cross_potential, weights)
+        # Weighted current energy
+        current_covmatrix = covmatrix_design_indices_rows[:, design_indices]
+        weighted_current_energy = np.dot(np.dot(current_covmatrix, weights), weights)
+        mmd = self._target_energy - 2 * weighted_cross_energy + weighted_current_energy
         return mmd
 
     def compute_criterion(self, design_indices):

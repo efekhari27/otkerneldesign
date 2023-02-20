@@ -116,7 +116,7 @@ plt.show()
 # For any given sample and target distribution, 
 # let us compute a set of optimal weights for quadrature.
 
-bqm = otkd.BayesianQuadratureWeighting(
+bqm = otkd.BayesianQuadrature(
     kernel=kernel, 
     distribution=distribution, 
 )

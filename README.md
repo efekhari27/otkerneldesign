@@ -7,7 +7,7 @@ This Python module generates designs of experiments based on kernel methods such
 
 Additionally, optimal weights for quadrature and validation designs are provided by the classes:
 
-- BayesianQuadratureWeighting
+- BayesianQuadrature
 - TestSetWeighting
 
 ## Installation
